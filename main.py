@@ -22,6 +22,7 @@ if __name__ == "__main__":
     fname = "data/cacm/cacm.txt"
     I = Index(name,docs,stems,docsFrom,parser,textRepresenter)
     I.indexation(fname)
+    print I.getTfsForDoc("1")
     # Squelette code
     #with open(None, "") as idx:
     #    idx.tell()
