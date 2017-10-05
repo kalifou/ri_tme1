@@ -11,11 +11,12 @@ class Index(object):
     def __init__(self,name,docs,stems,docFrom,parser,textRepresenter):
         self.name = name
         self.docs = {}
-        self.stems = stems
-        self.docFrom = docFrom
+        self.stems = {}
+        self.docFrom = {}
         self.parser = parser
         self.textRepresenter = textRepresenter
         self.index_file = None
+        self.inv_index_file = None
 
     def indexation(self,source_file):
         """Building Indexes and Inversed Indexes"""
@@ -24,43 +25,72 @@ class Index(object):
         
         self.index_file = 'index.txt'
         #if file not built, create it
-        if not os.path.isfile('./index.txt'):
-            index = open("index.txt", "w+")
+        #if not os.path.isfile('./index.txt'):
+        index = open("index.txt", "w+")
+        
+        #store the size needed for each stem to write them in inverted index
+        stem_length = {}
             
             
-            #print doc.getText()
-            # Getting the Bow
-            #Bow = self.textRepresenter.getTextRepresentation(doc.getText()) 
-            #others = doc.get(key) 
-            while True:
-                 #gather data from doc and update dictionary
-                 doc = self.parser.nextDocument()
-                 if (doc == None):
-                     break
-                 bow = str(self.textRepresenter.getTextRepresentation(doc.getText()))
-                 key = doc.getId()
-                 self.docs[key] = (index.tell(), len(bow))
-                 
-                 #store in file
-                 index.write(bow)
-            index.close()
+        #print doc.getText()
+        # Getting the Bow
+        #Bow = self.textRepresenter.getTextRepresentation(doc.getText()) 
+        #others = doc.get(key) 
+        while True:
+             #gather data from doc and update dictionary
+             doc = self.parser.nextDocument()
+             if (doc == None):
+                 break
+             bow = self.textRepresenter.getTextRepresentation(doc.getText())
+             str_bow = str(bow)
+             doc_id = doc.getId()
+             self.docs[doc_id] = (index.tell(), len(str_bow))
+             
+             #store position and length of document
+             source_path, position, length = doc.get("from").split(';')
+             self.docFrom[doc_id] = [source_path, position, length]
+             #store in file
+             index.write(str_bow)
+             
+             #STEP 1 for inv index: gather size needed for each term
+             for stem,val in bow.iteritems():
+                 if stem in stem_length:
+                     stem_length[stem] += len("(" + doc_id + ":" + str(val) + ");")
+                 else:
+                     stem_length[stem] = len("(" + doc_id + ":" + str(val) + ");")
+        
+        #STEP 2 for inv index: compute positions in txt file for each stem
+        cur_pos = 0
+        pos = {}
+        for stem,length in stem_length.iteritems():
+            pos[stem] = cur_pos + length
+            cur_pos = pos[stem]
             
-
-        # enregister others dans docFrom
-        #index = None
-        #inversed_index =  None
-        #        while True:
-        #            
-        #            next = self.parser.nextDocument(source_file)
-        #            text_representation = self.textRepresenter.getTextRepresentation(next)        
-        #            
-        #            index = None
-        #            inversed_index =  None
-        #            
-        #return index,inversed_index 
-        #NOTE: I think it returns nothing but rather update self.docs, stems,..
-        #
-
+            #populate stems dictionary
+            self.stems[stem] = (pos[stem],stem_length[stem])
+        
+        
+        #STEP 3 for inv index: perform 2nd pass over docs to write in file
+        self.inv_index_file = "inv_index.txt"
+        inv_index = open(self.inv_index_file, "w+")
+         
+        self.parser.initFile(source_file)
+        while True:
+             #gather data from doc and update dictionary
+             doc = self.parser.nextDocument()
+            
+             if (doc == None):
+                 break
+             doc_id = doc.getId()
+             bow = self.textRepresenter.getTextRepresentation(doc.getText())
+             for stem,val in bow.iteritems():
+                 inv_index.seek(pos[stem])
+                 inv_index.write("(" + doc_id + ":" + str(val) + ");")
+                 pos[stem] += len("(" + doc_id + ":" + str(val) + ");")
+             
+        index.close()
+        inv_index.close()
+            
     #Return bow representation of a document given its ID
     def getTfsForDoc(self,doc_id):
         pos, size = self.docs[doc_id]
@@ -68,13 +98,20 @@ class Index(object):
         index.seek(pos)
         bow = index.read(size)
         return ast.literal_eval(bow)
-        
-    def getTfsForStem(self,source_file):
-        _,inversed_index = self.indexation(source_file)
-        doc_tf = None        
-        return doc_tf
+    
+    def getTfsForStem(self,stem):
+        inv_index = open(self.inv_index_file,"r")
+        pos, length = self.stems[stem]
+        inv_index.seek(pos)
+        ret = inv_index.read(length)
+        inv_index.close()
+        return ret
 
-    def getStr(self,source_file):
-        str = None
-        return str            
+    def getStrDoc(self,doc_id): 
+        source_path, position, length = self.docFrom[doc_id];
+        source_file = open(source_path,'r')
+        source_file.seek(int(position))
+        doc = source_file.read(int(length))
+        source_file.close()
+        return doc
     

@@ -22,7 +22,9 @@ if __name__ == "__main__":
     fname = "data/cacm/cacm.txt"
     I = Index(name,docs,stems,docsFrom,parser,textRepresenter)
     I.indexation(fname)
-    print I.getTfsForDoc("1")
+    print I.getTfsForDoc("20")
+    print I.getStrDoc("20")
+    print I.getTfsForStem("iter")
     # Squelette code
     #with open(None, "") as idx:
     #    idx.tell()
