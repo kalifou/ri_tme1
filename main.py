@@ -24,7 +24,10 @@ if __name__ == "__main__":
     I.indexation(fname)
     print I.getTfsForDoc("20")
     print I.getStrDoc("20")
-    print I.getTfsForStem("iter")
+    #stems checked  : iter  solut wegstein converg procedur exampl (ok),
+    #fails for techniqu discuss with "((" appearing  &  ( missing 
+    # seems like we overwrite at the wrong position
+    print I.getTfsForStem("techniqu") 
     # Squelette code
     #with open(None, "") as idx:
     #    idx.tell()

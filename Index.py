@@ -26,38 +26,32 @@ class Index(object):
         self.index_file = 'index.txt'
         #if file not built, create it
         #if not os.path.isfile('./index.txt'):
-        index = open("index.txt", "w+")
+        index = open("index.txt", "wb+")
         
         #store the size needed for each stem to write them in inverted index
         stem_length = {}
             
             
-        #print doc.getText()
-        # Getting the Bow
-        #Bow = self.textRepresenter.getTextRepresentation(doc.getText()) 
-        #others = doc.get(key) 
         while True:
              #gather data from doc and update dictionary
              doc = self.parser.nextDocument()
              if (doc == None):
+                 index.close()
                  break
+             # Getting the Bow                    
              bow = self.textRepresenter.getTextRepresentation(doc.getText())
              str_bow = str(bow)
              doc_id = doc.getId()
              self.docs[doc_id] = (index.tell(), len(str_bow))
              
-             #store position and length of document
-             source_path, position, length = doc.get("from").split(';')
-             self.docFrom[doc_id] = [source_path, position, length]
+             #stores  the source,position and length of document as   [source_path, position, length]
+             self.docFrom[doc_id] = doc.get("from").split(';')
              #store in file
              index.write(str_bow)
              
              #STEP 1 for inv index: gather size needed for each term
              for stem,val in bow.iteritems():
-                 if stem in stem_length:
-                     stem_length[stem] += len("(" + doc_id + ":" + str(val) + ");")
-                 else:
-                     stem_length[stem] = len("(" + doc_id + ":" + str(val) + ");")
+                 stem_length[stem] = stem_length.get(stem,0)+ len("(" + str(doc_id) + ":" + str(val) + ");")
         
         #STEP 2 for inv index: compute positions in txt file for each stem
         cur_pos = 0
@@ -72,7 +66,7 @@ class Index(object):
         
         #STEP 3 for inv index: perform 2nd pass over docs to write in file
         self.inv_index_file = "inv_index.txt"
-        inv_index = open(self.inv_index_file, "w+")
+        inv_index = open(self.inv_index_file, "wb+")
          
         self.parser.initFile(source_file)
         while True:
@@ -80,16 +74,18 @@ class Index(object):
              doc = self.parser.nextDocument()
             
              if (doc == None):
+                 inv_index.close()
                  break
              doc_id = doc.getId()
              bow = self.textRepresenter.getTextRepresentation(doc.getText())
              for stem,val in bow.iteritems():
                  inv_index.seek(pos[stem])
-                 inv_index.write("(" + doc_id + ":" + str(val) + ");")
-                 pos[stem] += len("(" + doc_id + ":" + str(val) + ");")
+                 str_wrt ="(" + str(doc_id) + ":" + str(val) + ");"
+                 inv_index.write(str_wrt)
+                 pos[stem] = pos.get(stem,0)+ len(str_wrt)
              
-        index.close()
-        inv_index.close()
+        
+        
             
     #Return bow representation of a document given its ID
     def getTfsForDoc(self,doc_id):
@@ -97,6 +93,7 @@ class Index(object):
         index = open(self.index_file,'r')
         index.seek(pos)
         bow = index.read(size)
+        index.close()
         return ast.literal_eval(bow)
     
     def getTfsForStem(self,stem):
