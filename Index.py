@@ -57,11 +57,16 @@ class Index(object):
         cur_pos = 0
         pos = {}
         for stem,length in stem_length.iteritems():
-            pos[stem] = cur_pos + length
-            cur_pos = pos[stem]
-            
             #populate stems dictionary
-            self.stems[stem] = (pos[stem],stem_length[stem])
+            self.stems[stem] = (cur_pos, length)
+
+            #store position where to write stem
+            pos[stem] = cur_pos
+            
+            #next stem will be written at the end of current one
+            cur_pos += length
+            
+           
         
         
         #STEP 3 for inv index: perform 2nd pass over docs to write in file
