@@ -107,7 +107,7 @@ class Index(object):
         inv_index.seek(pos)
         ret = inv_index.read(length)
         inv_index.close()
-        return ret
+        return self.dict_from_string(ret)
 
     def getStrDoc(self,doc_id): 
         source_path, position, length = self.docFrom[doc_id];
@@ -116,4 +116,13 @@ class Index(object):
         doc = source_file.read(int(length))
         source_file.close()
         return doc
+        
+    def dict_from_string(self,str):
+        t = str[:-1].split(';')
+        d = {}
+        for e in t:
+            e[1:-1].split(':')
+            [id,freq] = e[1:-1].split(':')
+            d[int(id)] = int(freq)
+        return d
     

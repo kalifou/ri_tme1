@@ -26,7 +26,7 @@ if __name__ == "__main__":
     print I.getStrDoc("20")
     #stems checked  : iter  solut wegstein converg procedur exampl (ok),
     #fails for techniqu discuss with "((" appearing  &  ( missing 
-    # seems like we overwrite at the wrong position
+    # seems like we overwrite at the wrong position : try to read the inv_index.txt, the head is incomplete/ unreadable. 
     print I.getTfsForStem("techniqu") 
     # Squelette code
     #with open(None, "") as idx:
