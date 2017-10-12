@@ -68,11 +68,8 @@ class Log(Weighter):
 class Log_plus(Weighter):
     def getDocWeightsForDoc(self,idDoc):
         tf = self.index.getTfsForDoc(idDoc)        
-        return dict((k, (1 + np.log(v)) * self.idf_term(k) ) for k,v in tf.items())
+        return dict((k, (1 + np.log(v)) * self.idf_term(k)) for k,v in tf.items())
 
     def getWeightsForQuery(self,query):
-        ####
-        idf_q = self.idf_query(query)
-        pass
-    
-        ###return dict((k, (1 + np.log(?)) * v ) for k,v in idf_q.items())
+        idf_q = self.idf_query(query)    
+        return dict((k, (1 + np.log(self.index.getTfsForStem(k))) * v ) for k,v in idf_q.items())
