@@ -15,11 +15,13 @@ class Weighter(object):
         self.N = len(self.index.docs)        
         
     def getDocWeightsForDoc(self,idDoc):
-        """returning the stem present in doc with associated freq """
-        pass
+        """returning the stem present in doc with associated freq """        
+        return self.index.getTfsForDoc(idDoc)
+        
     def getDocWeightsForStem(self,stem):
         """returning the docs where stem is present with associated freq """
-        pass
+        return self.index.getTfsForStem(stem)
+        
     def getWeightsForQuery(self,query):        
         """Returning a dictionnary of present keys valued to 1 """  
         pass
@@ -32,16 +34,11 @@ class Weighter(object):
     def idf_query(self,query):
         """getting the inverse doc freq for each term of the query"""        
         w = dict()
-        for t in query.keys():            
+        for t in query.keys():                        
             w[t] = self.idf_term(t)
-    
-class Binary(Weighter):
-    
-    def getDocWeightsForDoc(self,idDoc):        
-        return self.index.getTfsForDoc(idDoc)
+        return w
         
-    def getDocWeightsForStem(self,stem):        
-        return self.index.getTfsForStem(stem)
+class Binary(Weighter):
         
     def getWeightsForQuery(self,query):      
         d = dict()
@@ -53,11 +50,11 @@ class TF(Weighter):
     def getWeightsForQuery(self,query):    
         return query
 
-class TF_IDF(Weighter):
+class TF_IDF(TF):
     def getWeightsForQuery(self,query): 
         return self.idf_query(query)
                         
-class Log(Weighter):
+class Log(TF):
     def getDocWeightsForDoc(self,idDoc):
         d = self.index.getTfsForDoc(idDoc)
         return dict((k, 1 + np.log(v)) for k,v in d.items())
@@ -65,7 +62,7 @@ class Log(Weighter):
     def getWeightsForQuery(self,query):
         return self.idf_query(query)
 
-class Log_plus(Weighter):
+class Log_plus(TF):
     def getDocWeightsForDoc(self,idDoc):
         tf = self.index.getTfsForDoc(idDoc)        
         return dict((k, (1 + np.log(v)) * self.idf_term(k)) for k,v in tf.items())

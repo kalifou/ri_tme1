@@ -9,6 +9,7 @@ from Index import Index
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from Document import Document
+from Weighter import *
 
 if __name__ == "__main__":
     
@@ -32,4 +33,9 @@ if __name__ == "__main__":
     #with open(None, "") as idx:
     #    idx.tell()
     #    idx.write()
-    #    idx.seek()
+#    #    idx.seek()
+#    
+#    w =  B(I)
+#    print w.getDocWeightsForDoc("20")
+    
+    
