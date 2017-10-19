@@ -61,6 +61,10 @@ class Log(TF):
 
     def getWeightsForQuery(self,query):
         return self.idf_query(query)
+        
+    def getDocWeightsForStem(self,stem):
+        d = self.index.getTfsForStem(stem)
+        return dict((k, 1 + np.log(v)) for k,v in d.items())
 
 class Log_plus(TF):
     def getDocWeightsForDoc(self,idDoc):
@@ -68,5 +72,10 @@ class Log_plus(TF):
         return dict((k, (1 + np.log(v)) * self.idf_term(k)) for k,v in tf.items())
 
     def getWeightsForQuery(self,query):
-        idf_q = self.idf_query(query)    
-        return dict((k, (1 + np.log(self.index.getTfsForStem(k))) * v ) for k,v in idf_q.items())
+        idf_q = self.idf_query(query)
+        return dict((k, (1 + np.log(query[k])) * v ) for k,v in idf_q.items())
+        
+    def getDocWeightsForStem(self,stem):
+        tfs = self.index.getTfsForStem(stem)  
+        idf_stem = self.idf_term(stem)
+        return dict((k, (1 + np.log(v)) * idf_stem) for k,v in tfs.items())
