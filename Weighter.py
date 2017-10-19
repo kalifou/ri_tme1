@@ -12,7 +12,13 @@ class Weighter(object):
     """Class """
     def __init__(self,index):
         self.index = index
-        self.N = len(self.index.docs)        
+        self.N = len(self.index.docs)   
+        
+        # Save norm of all documents for normalized scores
+        self.norm ={}        
+        for d in self.index.docs:
+            values = self.getDocWeightsForDoc(d).values()
+            self.norm[d] = np.sum(np.abs(values))
         
     def getDocWeightsForDoc(self,idDoc):
         """returning the stem present in doc with associated freq """        

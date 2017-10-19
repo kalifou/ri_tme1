@@ -9,9 +9,32 @@ from Index import Index
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from Weighter import *
+from IRmodel import Vectoriel
+
+
+def test_weighter():
+    parser = ParserCACM()
+    textRepresenter = PorterStemmer() 
+    name = None
+    docs = None
+    stems = None
+    docsFrom = None         
+    fname = "data/cacm/cacm.txt"
+    I = Index(name,docs,stems,docsFrom,parser,textRepresenter)
+    I.indexation(fname)
+    weighters = [Binary(I), TF(I), TF_IDF(I), Log(I), Log_plus(I)]
+    for i,w in enumerate(weighters):
+        print "Test of weighter" + str(i)
+        print "getDocWeightsForDoc"
+        print w.getDocWeightsForDoc("20")
+        print "getDocWeightsForStem"
+        print w.getDocWeightsForStem("accelerat")
+        print "getDocWeightsForQuery"
+        print w.getWeightsForQuery(I.getTfsForDoc("20"))
+
 
 if __name__ == "__main__":
-    
+    print "coucou"
     parser = ParserCACM()
     textRepresenter = PorterStemmer()
     
@@ -20,8 +43,10 @@ if __name__ == "__main__":
     stems = None
     docsFrom = None         
     fname = "data/cacm/cacm.txt"
+    print "coucou"
     I = Index(name,docs,stems,docsFrom,parser,textRepresenter)
     I.indexation(fname)
+    print "cucu"
     #print I.getTfsForDoc("20")
     #print I.getStrDoc("20")
     #stems checked  : iter  solut wegstein converg procedur exampl (ok),
@@ -32,23 +57,12 @@ if __name__ == "__main__":
     
     
     # Test for our different implementations of weighter
-    weighters = [Binary(I), TF(I), TF_IDF(I), Log(I), Log_plus(I)]
-    for i,w in enumerate(weighters):
-        print "Test of weighter" + str(i)
-        print "getDocWeightsForDoc"
-        print w.getDocWeightsForDoc("20")
-        print "getDocWeightsForStem"
-        print w.getDocWeightsForStem("accelerat")
-        print "getDocWeightsForQuery"
-        print w.getWeightsForQuery(I.getTfsForDoc("20"))
+    weighters = [Binary(I)]#, TF(I), TF_IDF(I), Log(I), Log_plus(I)
+    models = [Vectoriel(False, w) for w in weighters]
     
-    # Squelette code
-    #with open(None, "") as idx:
-    #    idx.tell()
-    #    idx.write()
-#    #    idx.seek()
-#    
-#    w =  B(I)
-#    print w.getDocWeightsForDoc("20")
+    for i,m in enumerate(models):
+        print "Test of model " + str(i)
+        print "getScores = ", m.getScores(I.getTfsForDoc("20"))
+    
     
     
