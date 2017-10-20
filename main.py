@@ -8,7 +8,7 @@ Created on Thu Sep 28 11:57:37 2017
 from Index import Index
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
-from Weighter import *
+from Weighter import Binary, TF, TF_IDF, Log, Log_plus
 from IRmodel import Vectoriel
 
 
@@ -57,12 +57,12 @@ if __name__ == "__main__":
     
     
     # Test for our different implementations of weighter
-    weighters = [Binary(I)]#, TF(I), TF_IDF(I), Log(I), Log_plus(I)
+    weighters = [ Log_plus(I)] #[Binary(I), TF(I), TF_IDF(I), Log(I), Log_plus(I)]
     models = [Vectoriel(False, w) for w in weighters]
     
     for i,m in enumerate(models):
         print "Test of model " + str(i)
-        print "getScores = ", m.getScores(I.getTfsForDoc("20"))
-    
+        print "getScores = ",m.getScores(I.getTfsForDoc("20"))
+        print "\n\n getRanking = ",m.getRanking(I.getTfsForDoc("20"))
     
     
