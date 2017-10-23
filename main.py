@@ -34,7 +34,6 @@ def test_weighter():
 
 
 if __name__ == "__main__":
-    print "coucou"
     parser = ParserCACM()
     textRepresenter = PorterStemmer()
     
@@ -43,26 +42,26 @@ if __name__ == "__main__":
     stems = None
     docsFrom = None         
     fname = "data/cacm/cacm.txt"
-    print "coucou"
+    
+    print "Indexing database ..."
     I = Index(name,docs,stems,docsFrom,parser,textRepresenter)
     I.indexation(fname)
-    print "cucu"
+    
     #print I.getTfsForDoc("20")
-    #print I.getStrDoc("20")
-    #stems checked  : iter  solut wegstein converg procedur exampl (ok),
-    #fails for techniqu discuss with "((" appearing  &  ( missing 
-    # seems like we overwrite at the wrong position : try to read the inv_index.txt, the head is incomplete/ unreadable. 
-    
+    #print I.getStrDoc("20")  
     #print I.getTfsForStem("techniqu")
-    
-    
     # Test for our different implementations of weighter
-    weighters = [ Log_plus(I)] #[Binary(I), TF(I), TF_IDF(I), Log(I), Log_plus(I)]
+    
+    #Log_plus instanciation not returning, must be because of idf computation
+    weighters = [Binary(I), TF(I), TF_IDF(I), Log(I)] # Log_plus(I)
     models = [Vectoriel(False, w) for w in weighters]
     
+    queryExample = {'techniqu' : 1, 'accelerat' : 1}
     for i,m in enumerate(models):
         print "Test of model " + str(i)
-        print "getScores = ",m.getScores(I.getTfsForDoc("20"))
-        print "\n\n getRanking = ",m.getRanking(I.getTfsForDoc("20"))
+        #print "getScores = ",m.getScores(queryExample)
+        query_result = m.getRanking(queryExample)
+        print "get top 3 documents = ", '[%s]' % ', '.join(map(str, query_result[0:3] ))
+        #print "\n\n getRanking = ",m.getRanking(I.getTfsForDoc("20"))
     
     

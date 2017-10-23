@@ -43,13 +43,17 @@ class Vectoriel(IRmodel):
             for doc_id in doc_score:
                 doc_score[doc_id] /= query_norm * self.Weighter.norm[doc_id]
         
+        
+        #Not needed, we want a sparse encoding
+        '''
         # Getting all ids of docs without any score
         docs_with_score = doc_score.keys()
         all_doc_ids = self.Weighter.index.docs.keys()
         no_score = list( set(all_doc_ids) - set(docs_with_score))
         for doc_id in no_score:
             doc_score[doc_id] = 0
-            
+        '''
+        
         return doc_score
     
     def getRanking(self,query):
