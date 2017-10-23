@@ -10,7 +10,7 @@ from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from Weighter import Binary, TF, TF_IDF, Log, Log_plus
 from IRmodel import Vectoriel
-
+from QueryParserV2 import QueryParser
 
 def test_weighter():
     parser = ParserCACM()
@@ -43,6 +43,10 @@ if __name__ == "__main__":
     docsFrom = None         
     fname = "data/cacm/cacm.txt"
     
+    query_file = "data/cacm/cacm.qry"
+    relevance_file = "data/cacm/cacm.rel"
+    query_parser = QueryParser(query_file, relevance_file)
+    '''
     print "Indexing database ..."
     I = Index(name,docs,stems,docsFrom,parser,textRepresenter)
     I.indexation(fname)
@@ -53,7 +57,7 @@ if __name__ == "__main__":
     # Test for our different implementations of weighter
     
     #Log_plus instanciation not returning, must be because of idf computation
-    weighters = [Binary(I), TF(I), TF_IDF(I), Log(I)] # Log_plus(I)
+    weighters = [Binary(I), TF(I), TF_IDF(I), Log(I)] # Log_plus(I)]
     models = [Vectoriel(False, w) for w in weighters]
     
     queryExample = {'techniqu' : 1, 'accelerat' : 1}
@@ -63,5 +67,5 @@ if __name__ == "__main__":
         query_result = m.getRanking(queryExample)
         print "get top 3 documents = ", '[%s]' % ', '.join(map(str, query_result[0:3] ))
         #print "\n\n getRanking = ",m.getRanking(I.getTfsForDoc("20"))
-    
+    '''
     
