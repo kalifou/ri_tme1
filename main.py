@@ -64,9 +64,11 @@ if __name__ == "__main__":
     QueryParser = QueryParser(query_file, relevance_file)
     Eval = Eval_P()
     Q = QueryParser.nextQuery()
+    recall = []
+    prec = []
     for m in models:
         query_result = m.getRanking(Q.getTf())
         recall, prec = Eval.evaluation(Q, query_result)
-        print np.unique(recall)
-        print np.unique(prec)
+        print 'recall :', np.unique(recall)
+        print 'precision : ',np.unique(prec)
     
