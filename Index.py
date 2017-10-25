@@ -8,8 +8,7 @@ import ast
 import os
 class Index(object):
 
-    def __init__(self,name,docs,stems,docFrom,parser,textRepresenter):
-        self.name = name
+    def __init__(self,parser,textRepresenter):
         self.docs = {}
         self.stems = {}
         self.docFrom = {}

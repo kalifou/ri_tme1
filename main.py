@@ -10,17 +10,15 @@ from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from Weighter import Binary, TF, TF_IDF, Log, Log_plus
 from IRmodel import Vectoriel
-from QueryParserV2 import QueryParser
+from QueryParser import QueryParser, Eval_P
+import numpy as np
+import sys
 
 def test_weighter():
     parser = ParserCACM()
-    textRepresenter = PorterStemmer() 
-    name = None
-    docs = None
-    stems = None
-    docsFrom = None         
+    textRepresenter = PorterStemmer()         
     fname = "data/cacm/cacm.txt"
-    I = Index(name,docs,stems,docsFrom,parser,textRepresenter)
+    I = Index(parser,textRepresenter)
     I.indexation(fname)
     weighters = [Binary(I), TF(I), TF_IDF(I), Log(I), Log_plus(I)]
     for i,w in enumerate(weighters):
@@ -34,32 +32,23 @@ def test_weighter():
 
 
 if __name__ == "__main__":
-    parser = ParserCACM()
-    textRepresenter = PorterStemmer()
     
-    name = None
-    docs = None
-    stems = None
-    docsFrom = None         
     fname = "data/cacm/cacm.txt"
     
-    query_file = "data/cacm/cacm.qry"
-    relevance_file = "data/cacm/cacm.rel"
-    query_parser = QueryParser(query_file, relevance_file)
-    '''
-    print "Indexing database ..."
-    I = Index(name,docs,stems,docsFrom,parser,textRepresenter)
+    sys.stdout.write("Indexing database...")
+    parser = ParserCACM()
+    textRepresenter = PorterStemmer()
+    I = Index(parser,textRepresenter)
     I.indexation(fname)
+    sys.stdout.write("Done!\n")
     
-    #print I.getTfsForDoc("20")
-    #print I.getStrDoc("20")  
-    #print I.getTfsForStem("techniqu")
-    # Test for our different implementations of weighter
-    
+    sys.stdout.write("Creating weighters...")
     #Log_plus instanciation not returning, must be because of idf computation
     weighters = [Binary(I), TF(I), TF_IDF(I), Log(I)] # Log_plus(I)]
     models = [Vectoriel(False, w) for w in weighters]
-    
+    sys.stdout.write("Done!\n")
+       
+    '''
     queryExample = {'techniqu' : 1, 'accelerat' : 1}
     for i,m in enumerate(models):
         print "Test of model " + str(i)
@@ -68,4 +57,16 @@ if __name__ == "__main__":
         print "get top 3 documents = ", '[%s]' % ', '.join(map(str, query_result[0:3] ))
         #print "\n\n getRanking = ",m.getRanking(I.getTfsForDoc("20"))
     '''
+    
+    sys.stdout.write("Evaluation of weighter's models ...")
+    query_file = "data/cacm/cacm.qry"
+    relevance_file = "data/cacm/cacm.rel"
+    QueryParser = QueryParser(query_file, relevance_file)
+    Eval = Eval_P()
+    Q = QueryParser.nextQuery()
+    for m in models:
+        query_result = m.getRanking(Q.getTf())
+        recall, prec = Eval.evaluation(Q, query_result)
+        print np.unique(recall)
+        print np.unique(prec)
     

@@ -63,4 +63,4 @@ class Vectoriel(IRmodel):
         list_of_sorted_scores = list( (key,value) for key, value in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
         #print "\n Normal scores :\n", scores
         #print "\n Sorted scores :\n", list_of_sorted_scores
-        return list_of_sorted_scores
+        return np.array(list_of_sorted_scores)
