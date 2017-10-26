@@ -5,6 +5,7 @@ Created on Wed Oct 18 18:43:53 2017
 """
 import Weighter
 import numpy as np
+import sys
 
 class IRmodel(object):
     
@@ -42,18 +43,7 @@ class Vectoriel(IRmodel):
         if self.normalized:
             for doc_id in doc_score:
                 doc_score[doc_id] /= query_norm * self.Weighter.norm[doc_id]
-        
-        
-        #Not needed, we want a sparse encoding
-        '''
-        # Getting all ids of docs without any score
-        docs_with_score = doc_score.keys()
-        all_doc_ids = self.Weighter.index.docs.keys()
-        no_score = list( set(all_doc_ids) - set(docs_with_score))
-        for doc_id in no_score:
-            doc_score[doc_id] = 0
-        '''
-        
+         
         return doc_score
     
     def getRanking(self,query):
@@ -61,6 +51,14 @@ class Vectoriel(IRmodel):
         
         scores = self.getScores(query)        
         list_of_sorted_scores = list( (key,value) for key, value in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
+        
+        # Now add all docs without any score at the end of the list
+        docs_with_score = scores.keys()
+        all_doc_ids = self.Weighter.index.docs.keys()
+        no_score = list( set(all_doc_ids) - set(docs_with_score))
+        for doc_id in no_score:
+            list_of_sorted_scores.append((doc_id, -sys.maxint))
+              
         #print "\n Normal scores :\n", scores
         #print "\n Sorted scores :\n", list_of_sorted_scores
         return np.array(list_of_sorted_scores)

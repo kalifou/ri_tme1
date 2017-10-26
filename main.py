@@ -13,6 +13,9 @@ from IRmodel import Vectoriel
 from QueryParser import QueryParser, Eval_P
 import numpy as np
 import sys
+import os.path
+import pickle
+
 
 def test_weighter():
     parser = ParserCACM()
@@ -36,16 +39,31 @@ if __name__ == "__main__":
     fname = "data/cacm/cacm.txt"
     
     sys.stdout.write("Indexing database...")
-    parser = ParserCACM()
-    textRepresenter = PorterStemmer()
-    I = Index(parser,textRepresenter)
-    I.indexation(fname)
+    sys.stdout.flush()
+    if os.path.isfile('Index.p'):
+       I = pickle.load( open( "Index.p", "rb" ) ) 
+    
+    else:
+        parser = ParserCACM()
+        textRepresenter = PorterStemmer()
+        I = Index(parser,textRepresenter)
+        I.indexation(fname)
+        I.parser = None
+        pickle.dump( I, open( "Index.p", "wb" ) )
+        
     sys.stdout.write("Done!\n")
+    sys.stdout.flush()
     
     sys.stdout.write("Creating weighters...")
-    #Log_plus instanciation not returning, must be because of idf computation
-    weighters = [Binary(I), TF(I), TF_IDF(I), Log(I)] # Log_plus(I)]
-    models = [Vectoriel(False, w) for w in weighters]
+    sys.stdout.flush()
+    
+    if os.path.isfile('Vectoriel.p'):
+        models = pickle.load( open( "Vectoriel.p", "rb" ) )
+    else:
+        weighters = [Binary(I), TF(I), TF_IDF(I), Log(I)] # Log_plus(I)]
+        models = [Vectoriel(False, w) for w in weighters]
+        pickle.dump( I, open( "Vectoriel.p", "wb" ) )
+    
     sys.stdout.write("Done!\n")
        
     '''
@@ -57,7 +75,7 @@ if __name__ == "__main__":
         print "get top 3 documents = ", '[%s]' % ', '.join(map(str, query_result[0:3] ))
         #print "\n\n getRanking = ",m.getRanking(I.getTfsForDoc("20"))
     '''
-    
+    '''
     sys.stdout.write("Evaluation of weighter's models ...")
     query_file = "data/cacm/cacm.qry"
     relevance_file = "data/cacm/cacm.rel"
@@ -66,9 +84,10 @@ if __name__ == "__main__":
     Q = QueryParser.nextQuery()
     recall = []
     prec = []
+    query_result = 0
     for m in models:
         query_result = m.getRanking(Q.getTf())
         recall, prec = Eval.evaluation(Q, query_result)
-        print 'recall :', np.unique(recall)
-        print 'precision : ',np.unique(prec)
-    
+        print 'recall :', recall[0:15]
+        print 'precision : ',prec[0:15]
+    '''
