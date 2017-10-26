@@ -83,22 +83,27 @@ class Eval_P(EvalMeasure):
     def __init__(self):
         pass
     
-    def getNumRecall(self, i, relevant_doc, doc_list):
+    def getNumRecall(self, i, relevant_doc, retrieved_doc):
         """Compute recall for given query and sorted (document, score) list"""
-        print 
-        return float(len(np.intersect1d(relevant_doc[:,0], doc_list)))
+        #print "EVALUATION RECALL"
+        #print relevant_doc[:,0]
+        #print retrieved_doc
+        #print np.intersect1d(relevant_doc[:,0], retrieved_doc)
+        
+        
+        return float(len(np.intersect1d(relevant_doc[:,0], retrieved_doc)))
          
     def evaluation(self, Query, retrieved_doc):
         relevant_doc = np.array(Query.getRelevantDocs()) 
-        print "relevant docs",relevant_doc
-        print "\n retrieved docs",retrieved_doc,"\n"
-        #Compute precision-recall
+        
         recall = []
-        interpoled_precision = []
+        precision = []
         for i in xrange(len(retrieved_doc)):
-            numerator = self.getNumRecall(i, relevant_doc, retrieved_doc)
-            interpoled_precision.append( numerator / len(retrieved_doc)) # simple precision meas.
+            numerator = self.getNumRecall(i, relevant_doc, retrieved_doc[0:i])
+            precision.append( numerator / (i+1)) # simple precision meas.
             recall.append(  numerator/ len(relevant_doc) ) # simple recall meas.
+        
+        interpoled_precision = [max(precision[0:i+1]) for i in xrange(len(precision))]
         return recall, interpoled_precision
 
 class Eval_AP(EvalMeasure):

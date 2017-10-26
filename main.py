@@ -85,9 +85,11 @@ if __name__ == "__main__":
     recall = []
     prec = []
     query_result = 0
-    for m in models:
+    for i,m in enumerate(models):
+        print "Model ", i
         query_result = m.getRanking(Q.getTf())
-        recall, prec = Eval.evaluation(Q, query_result)
+        recall, interpolated_prec = Eval.evaluation(Q, query_result)
+        #Display first 15 values to see performances
         print 'recall :', recall[0:15]
-        print 'precision : ',prec[0:15]
+        print 'precision : ',interpolated_prec[0:15]
     

@@ -5,7 +5,7 @@ Created on Thu Sep 28 11:32:12 2017
 @author: kalifou
 """
 import ast
-import os
+
 class Index(object):
 
     def __init__(self,parser,textRepresenter):

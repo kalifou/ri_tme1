@@ -41,8 +41,8 @@ class Vectoriel(IRmodel):
                 doc_score[doc_id] = doc_score.get(doc_id, 0) + weights_query[stem] * w_stem
            
         if self.normalized:
-            for doc_id in doc_score:
-                doc_score[doc_id] /= query_norm * self.Weighter.norm[doc_id]
+            for doc_id in doc_score.keys():
+                doc_score[doc_id] /= (query_norm * self.Weighter.norm[str(doc_id)])
          
         return doc_score
     
