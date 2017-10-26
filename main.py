@@ -62,7 +62,7 @@ if __name__ == "__main__":
     else:
         weighters = [Binary(I), TF(I), TF_IDF(I), Log(I)] # Log_plus(I)]
         models = [Vectoriel(False, w) for w in weighters]
-        pickle.dump( I, open( "Vectoriel.p", "wb" ) )
+        pickle.dump( models, open( "Vectoriel.p", "wb" ) )
     
     sys.stdout.write("Done!\n")
        
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         print "get top 3 documents = ", '[%s]' % ', '.join(map(str, query_result[0:3] ))
         #print "\n\n getRanking = ",m.getRanking(I.getTfsForDoc("20"))
     '''
-    '''
+    
     sys.stdout.write("Evaluation of weighter's models ...")
     query_file = "data/cacm/cacm.qry"
     relevance_file = "data/cacm/cacm.rel"
@@ -90,4 +90,4 @@ if __name__ == "__main__":
         recall, prec = Eval.evaluation(Q, query_result)
         print 'recall :', recall[0:15]
         print 'precision : ',prec[0:15]
-    '''
+    
