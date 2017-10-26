@@ -100,7 +100,13 @@ class Index(object):
         index.close()
         return ast.literal_eval(bow)
     
+    #return -1 for unknown stem, tf otherwise
     def getTfsForStem(self,stem):
+
+        if not self.stems.has_key(stem):
+            print "Unknown stem:" + stem
+            return -1
+
         inv_index = open(self.inv_index_file,"r")
         pos, length = self.stems[stem]
         inv_index.seek(pos)

@@ -26,14 +26,19 @@ class Weighter(object):
         
     def getDocWeightsForStem(self,stem):
         """returning the docs where stem is present with associated freq """
-        return self.index.getTfsForStem(stem)
+        stem_tf = self.index.getTfsForStem(stem)
+        if stem_tf == -1:
+            return {}
+        return stem_tf
         
     def getWeightsForQuery(self,query):        
         """Returning a dictionnary of present keys valued to 1 """  
         pass
-    def idf_term(self,t):
-        """getting the inverse doc freq for each term of the query""" 
-        v = self.index.getTfsForStem(t)    
+    def idf_term(self,stem):
+        """getting the inverse doc freq for term"""
+        v = self.index.getTfsForStem(stem)
+        if v == -1: #unknwown stem
+            return 0
         N_t = float(len(v))
         return np.log(self.N / N_t)
         
@@ -70,6 +75,9 @@ class Log(TF):
         
     def getDocWeightsForStem(self,stem):
         d = self.index.getTfsForStem(stem)
+        
+        if d == -1:#unknown stem
+            return {}
         return dict((k, 1 + np.log(v)) for k,v in d.items())
 
 class Log_plus(TF):

@@ -37,6 +37,10 @@ class Vectoriel(IRmodel):
             #get weights of stem for all documents
             weights_stem = self.Weighter.getDocWeightsForStem(stem)
             
+            #if unknown stem, dicgtionnary empty, then go to new stem
+            if(len(weights_stem) == 0):
+                continue
+            
             for doc_id, w_stem in weights_stem.items():
                 doc_score[doc_id] = doc_score.get(doc_id, 0) + weights_query[stem] * w_stem
            

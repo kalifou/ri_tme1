@@ -77,21 +77,18 @@ class EvalMeasure(object):
     
     def eval(self,l):
         pass
-   
+    
+    def getNumRecall(self, i, relevant_doc, retrieved_doc):
+        """Compute recall for given query and sorted (document, score) list"""
+        return float(len(np.intersect1d(relevant_doc, retrieved_doc)))
+    
+
 class Eval_P(EvalMeasure):
     """Class for query evaluation using precision-recall""" 
     def __init__(self):
         pass
     
-    def getNumRecall(self, i, relevant_doc, retrieved_doc):
-        """Compute recall for given query and sorted (document, score) list"""
-        #print "EVALUATION RECALL"
-        #print relevant_doc[:,0]
-        #print retrieved_doc
-        #print np.intersect1d(relevant_doc[:,0], retrieved_doc)
-        
-        
-        return float(len(np.intersect1d(relevant_doc[:,0], retrieved_doc)))
+   
          
     def evaluation(self, Query, retrieved_doc):
         relevant_doc = np.array(Query.getRelevantDocs()) 
@@ -99,7 +96,7 @@ class Eval_P(EvalMeasure):
         recall = []
         precision = []
         for i in xrange(len(retrieved_doc)):
-            numerator = self.getNumRecall(i, relevant_doc, retrieved_doc[0:i])
+            numerator = self.getNumRecall(i, relevant_doc, retrieved_doc[0:i+1])
             precision.append( numerator / (i+1)) # simple precision meas.
             recall.append(  numerator/ len(relevant_doc) ) # simple recall meas.
         
@@ -108,7 +105,28 @@ class Eval_P(EvalMeasure):
 
 class Eval_AP(EvalMeasure):
     """Class for query evaluation using average precision-recall""" 
-    pass
+    def __init__(self):
+        pass
+    
+    def evaluation(self, Query, retrieved_doc):
+        relevant_doc = np.array(Query.getRelevantDocs())[:,0]
+        precisions = []
+        #print relevant_doc
+        for i,doc in enumerate(xrange(len(retrieved_doc))):
+            #if current doc is relevant, add current precision
+            #print 'hehe'
+            #print doc
+            #print 'type of retrieved doc'
+            #print type(doc)
+            #print 'type of relevant'
+            #print relevant_doc[0:4]
+            if str(doc) in relevant_doc:
+                precisions.append(self.getNumRecall(i, relevant_doc, retrieved_doc[0:i+1]) / (i+1))
+        #average precision
+        return 0 if len(precisions) == 0 else sum(precisions) / float(len(precisions))
+            
+   
+
     
 class EvalIRModel(object):
 
