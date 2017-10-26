@@ -20,6 +20,14 @@ class Weighter(object):
             values = self.getDocWeightsForDoc(d).values()
             self.norm[d] = np.sum(np.abs(values))
         
+        #Save idf of all stems
+        self.idf_stem = {}
+        for stem in self.index.stems.keys():
+            v = self.index.getTfsForStem(stem)
+            N_t = float(len(v))
+            self.idf_stem[stem] = np.log(self.N / N_t)
+        
+        
     def getDocWeightsForDoc(self,idDoc):
         """returning the stem present in doc with associated freq """        
         return self.index.getTfsForDoc(idDoc)
@@ -36,11 +44,8 @@ class Weighter(object):
         pass
     def idf_term(self,stem):
         """getting the inverse doc freq for term"""
-        v = self.index.getTfsForStem(stem)
-        if v == -1: #unknwown stem
-            return 0
-        N_t = float(len(v))
-        return np.log(self.N / N_t)
+        #return 0 if unknown stem
+        return self.idf_stem.get(stem,0)
         
     def idf_query(self,query):
         """getting the inverse doc freq for each term of the query"""        
