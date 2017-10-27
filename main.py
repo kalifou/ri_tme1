@@ -36,6 +36,15 @@ def test_weighter():
 
 def plotInterpolatedPrecisionRecall(recall, inter_prec):
     plt.plot(recall, inter_prec)  
+
+def testQuery(query_tf, models ):
+    print "query : ", query_tf
+    query_results = []
+    for i,m in enumerate(models):
+        print "Test of model " + str(i)
+        query_results.append(m.getRanking(queryExample))
+        print "get top 3 documents = ", '[%s]' % ', '.join(map(str, query_results[i][0:3] ))
+    return query_results
     
 
 if __name__ == "__main__":
@@ -62,24 +71,20 @@ if __name__ == "__main__":
     sys.stdout.flush()
     
     if os.path.isfile('Vectoriel.p'):
-        models = pickle.load( open( "Vectoriel.p", "rb" ) )
+        models = pickle.load( open( "Models.p", "rb" ) )
     else:
-        weighters = [Binary(I), TF(I), TF_IDF(I), Log(I)] # Log_plus(I)]
-        models = [Vectoriel(False, w) for w in weighters]
-        pickle.dump( models, open( "Vectoriel.p", "wb" ) )
+        weighters = [Binary(I), Log_plus(I)]#, TF(I), TF_IDF(I), Log(I)] # Log_plus(I)]
+        models = [Vectoriel(True, w) for w in weighters]
+        pickle.dump( models, open( "Models.p", "wb" ) )
     
     sys.stdout.write("Done!\n")
        
-    '''
-    queryExample = {'techniqu' : 1, 'accelerat' : 1}
-    for i,m in enumerate(models):
-        print "Test of model " + str(i)
-        #print "getScores = ",m.getScores(queryExample)
-        query_result = m.getRanking(queryExample)
-        print "get top 3 documents = ", '[%s]' % ', '.join(map(str, query_result[0:3] ))
-        #print "\n\n getRanking = ",m.getRanking(I.getTfsForDoc("20"))
-    '''
     
+    queryExample = {'techniqu' : 1, 'accelerat' : 1}
+    query_results = testQuery(queryExample, models)
+    
+    
+    '''
     sys.stdout.write("Evaluation of weighter's models ...")
     print '\n'
     query_file = "data/cacm/cacm.qry"
@@ -97,11 +102,11 @@ if __name__ == "__main__":
             query_result = m.getRanking(Q.getTf())
             recall, interpolated_prec = Eval.evaluation(Q, query_result)
             #Display first 15 values to see performances
-            #print 'recall :', recall[0:15]
-            #print 'precision : ',interpolated_prec[0:15]
+            print 'recall :', recall[0:15]
+            print 'precision : ',interpolated_prec[0:15]
             #plt.plot(recall, interpolated_prec)
             #plt.show()
             average_precision = EvalAP.evaluation(Q, query_result)
             print 'AP: ', average_precision
         Q = QueryParser.nextQuery()
-    
+    '''

@@ -41,8 +41,7 @@ class QueryParser(object):
         self.parser = ParserCACM()
         self.parser.initFile(query_file)
         
-        #Build a dictionary (query_id, list of relevant documents)
-        #TODO ASK IF OK TO LOAD ALL THIS, SHOULD WE NOT READ ONE BY ONE ?  
+        #Build a dictionary (query_id, list of relevant documents) 
         self.relevant_docs = {}
         with open(relevance_file, 'r') as f:
             for line in f:
@@ -87,15 +86,14 @@ class Eval_P(EvalMeasure):
     """Class for query evaluation using precision-recall""" 
     def __init__(self):
         pass
-    
-   
-         
+        
     def evaluation(self, Query, retrieved_doc):
         relevant_doc = np.array(Query.getRelevantDocs()) 
         
         recall = []
         precision = []
         for i in xrange(len(retrieved_doc)):
+            
             numerator = self.getNumRecall(i, relevant_doc, retrieved_doc[0:i+1])
             precision.append( numerator / (i+1)) # simple precision meas.
             recall.append(  numerator/ len(relevant_doc) ) # simple recall meas.
@@ -111,23 +109,17 @@ class Eval_AP(EvalMeasure):
     def evaluation(self, Query, retrieved_doc):
         relevant_doc = np.array(Query.getRelevantDocs())[:,0]
         precisions = []
+        
         #print relevant_doc
         for i,doc in enumerate(xrange(len(retrieved_doc))):
+            
             #if current doc is relevant, add current precision
-            #print 'hehe'
-            #print doc
-            #print 'type of retrieved doc'
-            #print type(doc)
-            #print 'type of relevant'
-            #print relevant_doc[0:4]
             if str(doc) in relevant_doc:
                 precisions.append(self.getNumRecall(i, relevant_doc, retrieved_doc[0:i+1]) / (i+1))
+                
         #average precision
         return 0 if len(precisions) == 0 else sum(precisions) / float(len(precisions))
-            
-   
-
-    
+               
 class EvalIRModel(object):
 
     def __init__(self):
