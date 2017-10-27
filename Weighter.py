@@ -14,18 +14,19 @@ class Weighter(object):
         self.index = index
         self.N = len(self.index.docs)   
         
-        # Save norm of all documents for normalized scores
-        self.norm ={}        
-        for d in self.index.docs:
-            values = self.getDocWeightsForDoc(d).values()
-            self.norm[d] = np.sum(np.abs(values))
-        
         #Save idf of all stems
         self.idf_stem = {}
         for stem in self.index.stems.keys():
             v = self.index.getTfsForStem(stem)
             N_t = float(len(v))
             self.idf_stem[stem] = np.log(self.N / N_t)
+        
+        # Save norm of all documents for normalized scores
+        self.norm ={}        
+        for d in self.index.docs:
+            values = self.getDocWeightsForDoc(d).values()
+            self.norm[d] = np.sum(np.abs(values))
+        
         
         
     def getDocWeightsForDoc(self,idDoc):
@@ -96,5 +97,7 @@ class Log_plus(TF):
         
     def getDocWeightsForStem(self,stem):
         tfs = self.index.getTfsForStem(stem)  
+        if tfs == -1:#unknown stem
+            return {}
         idf_stem = self.idf_term(stem)
         return dict((k, (1 + np.log(v)) * idf_stem) for k,v in tfs.items())
