@@ -35,7 +35,8 @@ class PorterStemmer(TextRepresenter):
         '''
         self.stopWords=set()
         self._setStopWords()
-        
+      
+    '''
     def getTextRepresentation(self,text):
         tab=re.findall(r"\w+",text,re.UNICODE)
         
@@ -44,6 +45,14 @@ class PorterStemmer(TextRepresenter):
         ret=Counter(tab)
         
         ret={porter.stem(a):b for (a,b) in ret.items()  if a not in self.stopWords}
+        return ret
+    '''
+    def getTextRepresentation(self,text):        
+        tab=re.findall(r"\w+",text,re.UNICODE) 
+        tab=[word.lower() for word in tab]
+        tab = [porter.stem(word) for word in tab if word not in self.stopWords]
+        ret=Counter(tab)
+        ret={a:b for (a,b) in ret.items()}
         return ret
     
         
