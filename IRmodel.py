@@ -3,7 +3,6 @@
 Created on Wed Oct 18 18:43:53 2017
 
 """
-import Weighter
 import numpy as np
 import sys
 
@@ -31,7 +30,11 @@ class Vectoriel(IRmodel):
         
         weights_query = self.Weighter.getWeightsForQuery(query)
         if self.normalized:
-            query_norm = np.sum(np.abs(weights_query.values()))
+            #print 'WEIGHTS_QUERY '
+            #print weights_query
+            query_norm = float(np.sum(np.abs(weights_query.values())))
+            #print 'QUERY NORM'
+            #print query_norm
         
         for stem in query:
             #get weights of stem for all documents
@@ -45,8 +48,18 @@ class Vectoriel(IRmodel):
                 doc_score[doc_id] = doc_score.get(doc_id, 0) + weights_query[stem] * w_stem
            
         if self.normalized:
+            #print doc_score.keys()
             for doc_id in doc_score.keys():
+                #print 'NORMALIZE ', doc_id
+                #print 'QUERY NORM'
+                #print query_norm
+                #print 'WEIGHTER NORM'
+                #print self.Weighter.norm[str(doc_id)]
+                #print'PREVIOUS SCORE'
+                #print doc_score[doc_id]
+                #print 'NEW SCORE'
                 doc_score[doc_id] /= (query_norm * self.Weighter.norm[str(doc_id)])
+                #print doc_score[doc_id]
          
         return doc_score
     
