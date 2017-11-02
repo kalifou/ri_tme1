@@ -67,7 +67,8 @@ class Vectoriel(IRmodel):
         """Ranking (ordered by desc) all the documents using how they score on the query"""
         
         scores = self.getScores(query)        
-        list_of_sorted_scores = list( (key,value) for key, value in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
+        list_of_sorted_scores = list( (key,value) for key, value \
+                            in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
         
         # Now add all docs without any score at the end of the list
         docs_with_score = scores.keys()

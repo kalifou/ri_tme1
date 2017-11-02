@@ -10,7 +10,8 @@ from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from Weighter import Binary, TF, TF_IDF, Log, Log_plus
 from IRmodel import Vectoriel
-from QueryParser import QueryParser, Eval_P, Eval_AP
+from QueryParser import QueryParser
+from EvalMeasure import Eval_P, Eval_AP
 import numpy as np
 import sys
 import os.path
@@ -82,31 +83,3 @@ if __name__ == "__main__":
     
     queryExample = {'techniqu' : 1, 'accelerat' : 1}
     query_results = testQuery(queryExample, models)
-    
-    
-    '''
-    sys.stdout.write("Evaluation of weighter's models ...")
-    print '\n'
-    query_file = "data/cacm/cacm.qry"
-    relevance_file = "data/cacm/cacm.rel"
-    QueryParser = QueryParser(query_file, relevance_file)
-    Eval = Eval_P()
-    EvalAP = Eval_AP()
-    recall = []
-    prec = []
-    query_result = 0
-    Q = QueryParser.nextQuery()
-    while (Q != -1):
-        for i,m in enumerate(models):
-            print "Model ", i
-            query_result = m.getRanking(Q.getTf())
-            recall, interpolated_prec = Eval.evaluation(Q, query_result)
-            #Display first 15 values to see performances
-            print 'recall :', recall[0:15]
-            print 'precision : ',interpolated_prec[0:15]
-            #plt.plot(recall, interpolated_prec)
-            #plt.show()
-            average_precision = EvalAP.evaluation(Q, query_result)
-            print 'AP: ', average_precision
-        Q = QueryParser.nextQuery()
-    '''
