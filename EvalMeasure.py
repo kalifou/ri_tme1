@@ -48,7 +48,7 @@ class Eval_P(EvalMeasure):
             precision.append( numerator /(i+1)) # simple precision meas.
             recall.append(  numerator/ N_relevant ) # simple recall meas.
         
-        interpoled_precision = [max(precision[0:i+1]) for i in xrange(len(precision))]
+        interpoled_precision = [max(precision[i:]) for i in xrange(len(precision))]
         return recall, interpoled_precision,precision
 
 class Eval_AP(EvalMeasure):

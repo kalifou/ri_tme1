@@ -18,7 +18,7 @@ def plot_(recall, interpolated_prec,precision):
     fig.suptitle('Precision - Recall',fontsize=15)
     plt.xlabel('Recall', fontsize=12)
     plt.ylabel('Precision', fontsize=12)
-    plt.plot(recall,precision, 'b',label="precision")
+    plt.plot(recall,precision, 'b-',label="precision")
     plt.plot(recall,interpolated_prec, 'r',label="interpolated precision")
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.show()
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     I = Index(parser,textRepresenter)
     I.indexation(fname)
     I.parser = None
-    weighters = [Binary(I),TF_IDF(I)]
+    weighters = [Log_plus(I)] #,TF_IDF(I)]
     models = [Vectoriel(True, w) for w in weighters]
     sys.stdout.write("Evaluation of weighter's models ...")
     print '\n'
