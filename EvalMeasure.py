@@ -108,20 +108,21 @@ class EvalIRModel(object):
         """ Evaluate the a set of query using a set of different Vector Models 
             Todo : calculate mean & std of each model on the whole query dataset
             DRAFT !
-            """
+        """
         
         sys.stdout.write("Evaluation of weighter's models ...")
         print '\n'
         Eval = Eval_P()
         EvalAP = Eval_AP()
         
-        recall_model_i = dict()
+        recall_model_i = dict() # {model_i:(recall,mean)}
         prec_model_i = dict()
         
-        query_result = 0
-        Q = self.query_parser.nextQuery()
-        
         for i,m in enumerate(self.models):
+            query_result = 0
+            self.query_parser = QueryParser(self.query_file, self.relevance_file)
+            Q = self.query_parser.nextQuery()
+        
             while (Q != -1):
                 
                 print "\n\nModel : ", m.getName()
@@ -135,15 +136,17 @@ class EvalIRModel(object):
                 average_precision = EvalAP.evaluation(Q, query_result)
                 print 'AP: ', average_precision
                 Q = self.query_parser.nextQuery()
+                
+            recall_model_i[i] = ()
+            prec_model_i[i] = ()
         
-    def eval(self):  
+    def eval(self): 
+        """ Ploting Interpolated Precision-recall for a set of models """
         
         sys.stdout.write("Evaluation of weighter's models ...")
         print '\n'
         Eval = Eval_P()
         EvalAP = Eval_AP()
-        recall = []
-        prec = []
         
         query_result = 0
         Q = self.query_parser.nextQuery()
