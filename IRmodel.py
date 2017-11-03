@@ -24,6 +24,9 @@ class Vectoriel(IRmodel):
         self.normalized = normalized
         self.Weighter = Weighter
 
+    def getName(self):
+        return self.Weighter.getName()
+        
     def getScores(self,query):
         """Calculating a score for all documents with respect to the stems of query """
         doc_score = {}

@@ -5,20 +5,27 @@ Created on Wed Nov  1 14:20:28 2017
 @author: kalifou
 """
 import numpy as np
+import sys
+import matplotlib.pyplot as plt
+from Weighter import Binary, TF, TF_IDF, Log, Log_plus
+from IRmodel import Vectoriel
+from ParserCACM import ParserCACM
+from TextRepresenter import PorterStemmer
+from Index import Index
+from QueryParser import QueryParser
 
 def intersection(l1,l2):
     """Intersection between list l1 & l2"""
     return list(set(l1).intersection(l2))
     
+        
 class EvalMeasure(object):
     """Abstract class for query evaluation""" 
     def __init__(self):
         pass
     
-    #def eval(self,l): # TO BE REMOVED ?!
-    #    pass 
-    
     def evaluation(self, Query, retrieved_doc):
+        """ Evaluate the list l of docs"""
         pass
     
     def getNumRecall(self, relevant_doc, retrieved_doc):
@@ -60,8 +67,7 @@ class Eval_AP(EvalMeasure):
         relevant_doc = np.array(Query.getRelevantDocs())[:,0]
         retrieved = retrieved_doc[:,0]
         precisions = []
-        
-        #print relevant_doc
+                
         for i,doc in enumerate(xrange(len(retrieved))):
             
             #if current doc is relevant, add current precision
@@ -70,8 +76,87 @@ class Eval_AP(EvalMeasure):
                 
         #average precision
         return 0 if len(precisions) == 0 else sum(precisions) / float(len(precisions))
-               
+ 
 class EvalIRModel(object):
-
-    def __init__(self):
-        pass
+    
+    def plot_(self,recall, interpolated_prec,precision):
+        """Plotting Both : simple & interpolated precision - recall curve"""
+        fig = plt.figure() #(figsize=(9,7))
+        fig.suptitle('Precision - Recall',fontsize=15)
+        plt.xlabel('Recall', fontsize=12)
+        plt.ylabel('Precision', fontsize=12)
+        plt.plot(recall,precision, 'b-',label="precision")
+        plt.plot(recall,interpolated_prec, 'r',label="interpolated precision")
+        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.show()
+        
+    def __init__(self, index_file, query_file, relevance_file):
+        
+        parser = ParserCACM()
+        textRepresenter = PorterStemmer()
+        I = Index(parser,textRepresenter)
+        I.indexation(index_file)
+        I.parser = None
+        weighters = [Binary(I)] #, TF(I), TF_IDF(I), Log(I), Log_plus(I)]
+        
+        self.models = [Vectoriel(True, w) for w in weighters]
+        self.query_file = query_file
+        self.relevance_file = relevance_file
+        self.query_parser = QueryParser(self.query_file, self.relevance_file)  
+    
+    def eval_std(self):  
+        """ Evaluate the a set of query using a set of different Vector Models 
+            Todo : calculate mean & std of each model on the whole query dataset
+            DRAFT !
+            """
+        
+        sys.stdout.write("Evaluation of weighter's models ...")
+        print '\n'
+        Eval = Eval_P()
+        EvalAP = Eval_AP()
+        
+        recall_model_i = dict()
+        prec_model_i = dict()
+        
+        query_result = 0
+        Q = self.query_parser.nextQuery()
+        
+        for i,m in enumerate(self.models):
+            while (Q != -1):
+                
+                print "\n\nModel : ", m.getName()
+                query_result = m.getRanking(Q.getTf())
+                recall, interpolated_prec,precision = Eval.evaluation(Q, query_result)
+                #Display first 10 values to see performances
+                print 'recall :', recall[0:10]
+                print 'precision : ',precision[0:10]
+                print 'inter_precision : ',interpolated_prec [0:10]
+                self.plot_(recall, interpolated_prec,precision) 
+                average_precision = EvalAP.evaluation(Q, query_result)
+                print 'AP: ', average_precision
+                Q = self.query_parser.nextQuery()
+        
+    def eval(self):  
+        
+        sys.stdout.write("Evaluation of weighter's models ...")
+        print '\n'
+        Eval = Eval_P()
+        EvalAP = Eval_AP()
+        recall = []
+        prec = []
+        
+        query_result = 0
+        Q = self.query_parser.nextQuery()
+        while (Q != -1):
+            for i,m in enumerate(self.models):
+                print "\n\nModel : ", m.getName()
+                query_result = m.getRanking(Q.getTf())
+                recall, interpolated_prec,precision = Eval.evaluation(Q, query_result)
+                #Display first 10 values to see performances
+                print 'recall :', recall[0:10]
+                print 'precision : ',precision[0:10]
+                print 'inter_precision : ',interpolated_prec [0:10]
+                self.plot_(recall, interpolated_prec,precision) 
+                average_precision = EvalAP.evaluation(Q, query_result)
+                print 'AP: ', average_precision
+            Q = self.query_parser.nextQuery()
