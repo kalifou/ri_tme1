@@ -57,8 +57,13 @@ class Weighter(object):
             w[t] = self.idf_term(t)
         return w
         
+    def getName(self):
+        pass
+    
 class Binary(Weighter):
         
+    def getName(self):
+         return " Binary"
     def getWeightsForQuery(self,query):      
         weights = dict()
         for stem in query.keys():
@@ -66,14 +71,23 @@ class Binary(Weighter):
         return weights
         
 class TF(Weighter):
+    def getName(self):
+         return " Text Frequency"
     def getWeightsForQuery(self,query):    
         return query
 
 class TF_IDF(TF):
+    def getName(self):
+         return " Text Frequency - Inverse Document Frequency"
+         
     def getWeightsForQuery(self,query): 
         return self.idf_query(query)
                         
 class Log(TF):
+
+    def getName(self):
+         return " Log"
+         
     def getDocWeightsForDoc(self,doc_id):
         doc_tf = self.index.getTfsForDoc(doc_id)
         return dict((stem, 1 + np.log(tf)) for stem,tf in doc_tf.items())
@@ -89,6 +103,8 @@ class Log(TF):
         return dict((doc_id, 1 + np.log(tf)) for doc_id,tf in stem_tfs.items())
 
 class Log_plus(TF):
+    def getName(self):
+         return " Log +"
     def getDocWeightsForDoc(self,idDoc):
         tf = self.index.getTfsForDoc(idDoc)        
         return dict((k, (1 + np.log(v)) * self.idf_term(k)) for k,v in tf.items())

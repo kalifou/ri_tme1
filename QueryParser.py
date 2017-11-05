@@ -13,7 +13,7 @@ class Query(object):
         self.query_id = query_id  # ID of the current query       
         self.query_text = query_text # text contained in the query
         self.query_tf = query_tf
-        self.relevant_docs = relevant_docs # dict of {doc_id : (themes, score)...} of docs relevant to the query
+        self.relevant_docs = relevant_docs # dict of {doc_id : [(theme1, score1),...(...,scoreN)]} of docs relevant to the query
         
     def getId(self):
         return self.query_id
@@ -66,61 +66,5 @@ class QueryParser(object):
         query_id = query_data.getId()
         query_text = query_data.getText()
         query_tf = self.textRepresenter.getTextRepresentation(query_text)
-        return Query(query_id, query_text, query_tf, np.array(self.relevant_docs[int(query_id)]))
-
-
-class EvalMeasure(object):
-    """Abstract class for query evaluation""" 
-    def __init__(self):
-        pass
-    
-    def eval(self,l):
-        pass
-    
-    def getNumRecall(self, i, relevant_doc, retrieved_doc):
-        """Compute recall for given query and sorted (document, score) list"""
-        return float(len(np.intersect1d(relevant_doc, retrieved_doc)))
-    
-
-class Eval_P(EvalMeasure):
-    """Class for query evaluation using precision-recall""" 
-    def __init__(self):
-        pass
-        
-    def evaluation(self, Query, retrieved_doc):
-        relevant_doc = np.array(Query.getRelevantDocs()) 
-        
-        recall = []
-        precision = []
-        for i in xrange(len(retrieved_doc)):
-            
-            numerator = self.getNumRecall(i, relevant_doc, retrieved_doc[0:i+1])
-            precision.append( numerator / (i+1)) # simple precision meas.
-            recall.append(  numerator/ len(relevant_doc) ) # simple recall meas.
-        
-        interpoled_precision = [max(precision[0:i+1]) for i in xrange(len(precision))]
-        return recall, interpoled_precision
-
-class Eval_AP(EvalMeasure):
-    """Class for query evaluation using average precision-recall""" 
-    def __init__(self):
-        pass
-    
-    def evaluation(self, Query, retrieved_doc):
-        relevant_doc = np.array(Query.getRelevantDocs())[:,0]
-        precisions = []
-        
-        #print relevant_doc
-        for i,doc in enumerate(xrange(len(retrieved_doc))):
-            
-            #if current doc is relevant, add current precision
-            if str(doc) in relevant_doc:
-                precisions.append(self.getNumRecall(i, relevant_doc, retrieved_doc[0:i+1]) / (i+1))
-                
-        #average precision
-        return 0 if len(precisions) == 0 else sum(precisions) / float(len(precisions))
-               
-class EvalIRModel(object):
-
-    def __init__(self):
-        pass
+        relevant_docs_to_query = np.array(self.relevant_docs.get(int(query_id),[[None,None,None]]))
+        return Query(query_id, query_text, query_tf, relevant_docs_to_query)
