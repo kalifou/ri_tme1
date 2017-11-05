@@ -70,30 +70,40 @@ class LanguageModel(IRmodel):
 
     def __init__(self, Index, lissage_term):
         self.l_term = lissage_term
-        self.corpus_size = Index.total_corpus_size      
+        self.Index = Index
+        self.corpus_size = float(Index.total_corpus_size)      
         
     def getScores(self,query):
         """Calculating a score for all documents with respect to the stems of query """
-        '''
-        PSEUDO CODE
+        
         doc_scores = {}
+        
+        #initial score when meeting doc for first time.
         init_score = 0
-        for stem in query.keys()
-            docs = get_tf_stem_for_doc(stem)
-            proba_in_corpus = sum values(docs) / self.corpus_size
-            for d in docs
-                if docs not in doc_scores
-                    doc_scores[d] = init_score   
-                proba_in_doc = docs[d] / sum values(get_tf_for_doc(d))
-                doc_scores[d] += query[stem]*log(l_term * proba_in_doc + (1-l_term) * proba_in_corpus)
+        
+        for stem in query.keys():
+            docs_with_stem = self.Index.getTfsForStem(stem)
+            corpus_prob = sum(docs_with_stem.values()) / self.corpus_size
             
-            for d in doc_scores - docs
-                doc_scores[d] += (1-l_term) * proba_in_corpus
+            #update scores for docs with stem
+            for d,stem_tf in docs_with_stem.items():
+                
+                #if doc had none of previous stems, score = sum of corpus probs
+                if not doc_scores.has_key(d):
+                    doc_scores[d] = init_score
+                    
+                doc_prob = stem_tf / float(sum(self.Index.getTfsForDoc(str(d)).values()))
+                doc_scores[d] += query[stem] * np.log(self.l_term * doc_prob + (1-self.l_term) * corpus_prob)
             
-            init_score += (1-l_term) * proba_in_corpus
+            #update scores for docs in doc_scores but without this stem
+            doc_scores_without_stem = list(set(doc_scores.keys()) - set(docs_with_stem.keys()))
+            for d in doc_scores_without_stem:
+                doc_scores[d] += (1-self.l_term) * corpus_prob
+            
+            #update initial score for new documents
+            init_score += (1-self.l_term) * corpus_prob
+
         return doc_scores
-        '''
-        pass
         
 
     
@@ -106,7 +116,7 @@ class LanguageModel(IRmodel):
         
         # Now add all docs without any score at the end of the list
         docs_with_score = scores.keys()
-        all_doc_ids = self.Weighter.index.docs.keys()
+        all_doc_ids = self.Index.docs.keys()
         no_score = list( set(all_doc_ids) - set(docs_with_score))
         for doc_id in no_score:
             list_of_sorted_scores.append((doc_id, -sys.maxint))
