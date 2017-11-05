@@ -65,6 +65,37 @@ class Vectoriel(IRmodel):
                 #print doc_score[doc_id]
          
         return doc_score
+        
+class LanguageModel(IRmodel):
+
+    def __init__(self, Index, lissage_term):
+        self.l_term = lissage_term
+        self.corpus_size = Index.total_corpus_size      
+        
+    def getScores(self,query):
+        """Calculating a score for all documents with respect to the stems of query """
+        '''
+        PSEUDO CODE
+        doc_scores = {}
+        init_score = 0
+        for stem in query.keys()
+            docs = get_tf_stem_for_doc(stem)
+            proba_in_corpus = sum values(docs) / self.corpus_size
+            for d in docs
+                if docs not in doc_scores
+                    doc_scores[d] = init_score   
+                proba_in_doc = docs[d] / sum values(get_tf_for_doc(d))
+                doc_scores[d] += query[stem]*log(l_term * proba_in_doc + (1-l_term) * proba_in_corpus)
+            
+            for d in doc_scores - docs
+                doc_scores[d] += (1-l_term) * proba_in_corpus
+            
+            init_score += (1-l_term) * proba_in_corpus
+        return doc_scores
+        '''
+        pass
+        
+
     
     def getRanking(self,query):
         """Ranking (ordered by desc) all the documents using how they score on the query"""
