@@ -36,7 +36,7 @@ class Weighter(object):
     def getDocWeightsForStem(self,stem):
         """returning the docs where stem is present with associated freq """
         stem_tf = self.index.getTfsForStem(stem)
-        if stem_tf == -1:
+        if stem_tf == -1:#unknown stem
             return {}
         return stem_tf
         
@@ -45,8 +45,10 @@ class Weighter(object):
         pass
     def idf_term(self,stem):
         """getting the inverse doc freq for term"""
-        #return 0 if unknown stem
-        return self.idf_stem.get(stem,0)
+        idf = self.idf_stem.get(stem,0)
+        if idf == 0:
+            print "UNKNOWN STEM"
+        return idf
         
     def idf_query(self,query):
         """getting the inverse doc freq for each term of the query"""        
@@ -58,10 +60,10 @@ class Weighter(object):
 class Binary(Weighter):
         
     def getWeightsForQuery(self,query):      
-        d = dict()
-        for k in query.keys():
-            d[k]=1
-        return d
+        weights = dict()
+        for stem in query.keys():
+            weights[stem]=1
+        return weights
         
 class TF(Weighter):
     def getWeightsForQuery(self,query):    
@@ -72,19 +74,19 @@ class TF_IDF(TF):
         return self.idf_query(query)
                         
 class Log(TF):
-    def getDocWeightsForDoc(self,idDoc):
-        d = self.index.getTfsForDoc(idDoc)
-        return dict((k, 1 + np.log(v)) for k,v in d.items())
+    def getDocWeightsForDoc(self,doc_id):
+        doc_tf = self.index.getTfsForDoc(doc_id)
+        return dict((stem, 1 + np.log(tf)) for stem,tf in doc_tf.items())
 
     def getWeightsForQuery(self,query):
         return self.idf_query(query)
         
     def getDocWeightsForStem(self,stem):
-        d = self.index.getTfsForStem(stem)
-        
-        if d == -1:#unknown stem
+        stem_tfs = self.index.getTfsForStem(stem)  
+        if stem_tfs == -1:#unknown stem
             return {}
-        return dict((k, 1 + np.log(v)) for k,v in d.items())
+            
+        return dict((doc_id, 1 + np.log(tf)) for doc_id,tf in stem_tfs.items())
 
 class Log_plus(TF):
     def getDocWeightsForDoc(self,idDoc):
