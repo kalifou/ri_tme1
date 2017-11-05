@@ -29,8 +29,10 @@ class Index(object):
         
         #store the size needed for each stem to write them in inverted index
         stem_length = {}
-            
-            
+          
+        #accumulates all tfs to have total size of corpus
+        self.total_corpus_size = 0
+        
         while True:
              #gather data from doc and update dictionary
              doc = self.parser.nextDocument()
@@ -39,6 +41,7 @@ class Index(object):
                  break
              # Getting the Bow                    
              bow = self.textRepresenter.getTextRepresentation(doc.getText())
+             self.total_corpus_size += sum(bow.values())
              str_bow = str(bow)
              doc_id = doc.getId()
              self.docs[doc_id] = (index.tell(), len(str_bow))
