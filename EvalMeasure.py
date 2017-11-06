@@ -8,7 +8,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from Weighter import Binary, TF, TF_IDF, Log, Log_plus
-from IRmodel import Vectoriel
+from IRmodel import Vectoriel, Okapi
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from Index import Index
@@ -90,16 +90,21 @@ class EvalIRModel(object):
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         plt.show()
         
-    def __init__(self, index_file, query_file, relevance_file):
+    def __init__(self, index_file, query_file, relevance_file,type="Vectoriel"):
+        """ type = Vectoriel | Okapi"""
         
         parser = ParserCACM()
         textRepresenter = PorterStemmer()
         I = Index(parser,textRepresenter)
         I.indexation(index_file)
         I.parser = None
-        weighters = [Binary(I)] #, TF(I), TF_IDF(I), Log(I), Log_plus(I)]
         
-        self.models = [Vectoriel(True, w) for w in weighters]
+        if type  == "Vectoriel":
+            weighters = [Binary(I), TF(I), TF_IDF(I), Log(I), Log_plus(I)]     
+            self.models = [Vectoriel(True, w) for w in weighters]
+        else :
+            self.models = [Okapi(I)]
+            
         self.query_file = query_file
         self.relevance_file = relevance_file
         self.query_parser = QueryParser(self.query_file, self.relevance_file)  

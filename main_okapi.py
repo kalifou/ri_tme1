@@ -7,23 +7,35 @@ Created on Sun Nov  5 13:03:11 2017
 from Index import Index
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
-from Okapi import Okapi
+from IRmodel import Okapi
+from EvalMeasure import EvalIRModel
 
 if __name__ == "__main__":
     
-    parser = ParserCACM()
-    textRepresenter = PorterStemmer()         
+# This code is running but I need to check the results
+    
+#    parser = ParserCACM()
+#    textRepresenter = PorterStemmer()         
+#    fname = "data/cacm/cacm.txt"
+#    I = Index(parser,textRepresenter)
+#    I.indexation(fname)
+#    
+#    print 'before building okapi'
+#    o = Okapi(I)
+#    print 'okapi built'
+#    
+#    queryExample = {'techniqu' : 1, 'accelerat' : 1}
+#    
+#    scores = o.getRanking(query=queryExample)
+#    print "Docs's ranking : ",scores
+    
+##########################################################
+# This eval gives poor results : I will investigate a bit later
     fname = "data/cacm/cacm.txt"
-    I = Index(parser,textRepresenter)
-    I.indexation(fname)
+    query_file = "data/cacm/cacm.qry"
+    relevance_file = "data/cacm/cacm.rel"
     
-    print 'before building okapi'
-    o = Okapi(I)
-    print 'okapi built'
+    type = "Okapi"
+    eval_platform = EvalIRModel(fname,query_file,relevance_file,type=type)
+    eval_platform.eval()
     
-    queryExample = {'techniqu' : 1, 'accelerat' : 1}
-    docs = o.L.keys()
-    for doc_id in docs :
-        print 'doc_id : ',doc_id
-        score = o.f(queryExample,doc_id)
-        print "Query's score : ",score
