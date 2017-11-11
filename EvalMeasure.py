@@ -8,7 +8,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from Weighter import Binary, TF, TF_IDF, Log, Log_plus
-from IRmodel import Vectoriel
+from IRmodel import Vectoriel, Okapi, LanguageModel
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from Index import Index
@@ -17,7 +17,17 @@ from QueryParser import QueryParser
 def intersection(l1,l2):
     """Intersection between list l1 & l2"""
     return list(set(l1).intersection(l2))
-    
+
+
+def removeUnknownStems(Query,Index):
+    """Remove unknown stem from query tf"""
+    query_tf = Query.getTf()
+    for stem in query_tf.keys():
+        #if unknown stem remove from query
+        if not Index.stems.has_key(stem):
+                print "Unknown stem removed: " + stem
+                query_tf.pop(stem)
+
         
 class EvalMeasure(object):
     """Abstract class for query evaluation""" 
@@ -90,16 +100,25 @@ class EvalIRModel(object):
         plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         plt.show()
         
-    def __init__(self, index_file, query_file, relevance_file):
+    def __init__(self, index_file, query_file, relevance_file,type="Vectoriel"):
+        """ type = Vectoriel | Okapi"""
         
         parser = ParserCACM()
         textRepresenter = PorterStemmer()
         I = Index(parser,textRepresenter)
         I.indexation(index_file)
         I.parser = None
-        weighters = [Binary(I)] #, TF(I), TF_IDF(I), Log(I), Log_plus(I)]
         
-        self.models = [Vectoriel(True, w) for w in weighters]
+        self.Index = I
+        
+        if type  == "Vectoriel":
+            weighters = [Binary(I), TF(I), TF_IDF(I), Log(I), Log_plus(I)]     
+            self.models = [Vectoriel(True, w) for w in weighters]
+        if type == "LanguageModel":
+            self.models = [LanguageModel(I,0.9)]
+        else :
+            self.models = [Okapi(I)]
+            
         self.query_file = query_file
         self.relevance_file = relevance_file
         self.query_parser = QueryParser(self.query_file, self.relevance_file)  
@@ -110,7 +129,7 @@ class EvalIRModel(object):
             DRAFT !
         """
         
-        sys.stdout.write("Evaluation of weighter's models ...")
+        sys.stdout.write("Evaluation of our models ...")
         print '\n'
         Eval = Eval_P()
         EvalAP = Eval_AP()
@@ -143,7 +162,7 @@ class EvalIRModel(object):
     def eval(self): 
         """ Ploting Interpolated Precision-recall for a set of models """
         
-        sys.stdout.write("Evaluation of weighter's models ...")
+        sys.stdout.write("Evaluation of our models ...")
         print '\n'
         Eval = Eval_P()
         EvalAP = Eval_AP()
@@ -151,6 +170,7 @@ class EvalIRModel(object):
         query_result = 0
         Q = self.query_parser.nextQuery()
         while (Q != -1):
+            removeUnknownStems(Q, self.Index)
             for i,m in enumerate(self.models):
                 print "\n\nModel : ", m.getName()
                 query_result = m.getRanking(Q.getTf())

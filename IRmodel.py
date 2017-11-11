@@ -5,6 +5,7 @@ Created on Wed Oct 18 18:43:53 2017
 """
 import numpy as np
 import sys
+from Weighter import TF
 
 class IRmodel(object):
     
@@ -16,13 +17,27 @@ class IRmodel(object):
         pass
 
     def getRanking(self,query):
-        pass
+        """Generic Ranking (ordered by desc) all the documents using how they score on the query"""
+        
+        scores = self.getScores(query)        
+        list_of_sorted_scores = list( (key,value) for key, value \
+                            in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
+        
+        # Now add all docs without any score at the end of the list
+        docs_with_score = scores.keys()
+        all_doc_ids = self.Index.docs.keys()
+        no_score = list( set(all_doc_ids) - set(docs_with_score))
+        for doc_id in no_score:
+            list_of_sorted_scores.append((doc_id, -sys.maxint))
+              
+        return np.array(list_of_sorted_scores)
 
 class Vectoriel(IRmodel):
 
-    def __init__(self,normalized,Weighter):
+    def __init__(self, Index,normalized,Weighter):
         self.normalized = normalized
         self.Weighter = Weighter
+        self.Index = Index
 
     def getName(self):
         return self.Weighter.getName()
@@ -71,7 +86,10 @@ class LanguageModel(IRmodel):
     def __init__(self, Index, lissage_term):
         self.l_term = lissage_term
         self.Index = Index
-        self.corpus_size = float(Index.total_corpus_size)      
+        self.corpus_size = float(Index.total_corpus_size)     
+    
+    def getName(self):
+        print "Language Model"
         
     def getScores(self,query):
         """Calculating a score for all documents with respect to the stems of query """
@@ -105,22 +123,61 @@ class LanguageModel(IRmodel):
 
         return doc_scores
         
-
+class Okapi(IRmodel):
+    """BM25 - Okapi : classical Probilistic model for Information Retrieval"""
     
-    def getRanking(self,query):
-        """Ranking (ordered by desc) all the documents using how they score on the query"""
+    def __init__(self,Index):
+        """Setting the params"""
+        self.k1 = np.random.uniform(1,2)
+        self.b = 0.75
+        self.Weighter = TF(Index)
+        self.Index = Index
         
-        scores = self.getScores(query)        
-        list_of_sorted_scores = list( (key,value) for key, value \
-                            in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
+        # Collecting docs length
+        self.L = {}
+        self.L_moy = 0.0
+        for doc_id in self.Index.docFrom.keys():
+            self.L[doc_id] = float(self.Index.docFrom[doc_id][2])
+            self.L_moy += self.L[doc_id]
+        self.L_moy = self.L_moy / self.Weighter.N # Check that the mean length is okay !!
+        print 'L moy : ',self.L_moy
         
-        # Now add all docs without any score at the end of the list
-        docs_with_score = scores.keys()
-        all_doc_ids = self.Index.docs.keys()
-        no_score = list( set(all_doc_ids) - set(docs_with_score))
-        for doc_id in no_score:
-            list_of_sorted_scores.append((doc_id, -sys.maxint))
-              
-        #print "\n Normal scores :\n", scores
-        #print "\n Sorted scores :\n", list_of_sorted_scores
-        return np.array(list_of_sorted_scores)
+        # Calculating all probabilistic ids for all stems        
+        self.idf_probabilistic = self.idf_probabilistic()
+        #print 'Proba. IDFs : ',self.idf_probabilistic
+        
+    def getName(self):
+        return "Okapi"
+        
+    def idf_probabilistic(self):
+        """ Probabilistic Inverse Document Frequency
+            TODO : add this function to __init__() in Weighter class with a switch parameter 
+                   such as probabilistic = True | False 
+        """
+        idf = {}
+        N = self.Weighter.N 
+        for stem in self.Index.stems.keys():
+            tfs = self.Index.getTfsForStem(stem)
+            df_t = float(len(tfs))
+            r = np.log(( N - df_t + .5 ) / ( df_t + .5) )
+            idf[stem] = max(0, r)
+        return idf
+        
+    def f(self,q,d):
+        """Score measuring how well Query q matches Document d"""
+        score = 0.0        
+        for t in q:
+            num = (self.k1 + 1)*  self.Weighter.getDocWeightsForStem(t).get(d,0.)
+            denom = self.k1 * ( (1-self.b) + self.b * self.L[d] / self.L_moy) \
+                                + self.Weighter.getDocWeightsForStem(t).get(d,0.)
+            #print 'denom :',denom
+            score += self.idf_probabilistic.get(t,0.0) * (num / denom)                                        
+        return score        
+    
+    def getScores(self,query):        
+        """compute doncument's scores for a given query"""
+        scores = {}        
+        docs = self.L.keys()
+        for doc_id in docs :
+            scores[doc_id] = self.f(query,doc_id)
+        return scores
