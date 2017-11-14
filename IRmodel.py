@@ -25,7 +25,7 @@ class IRmodel(object):
         
         # Now add all docs without any score at the end of the list
         docs_with_score = scores.keys()
-        all_doc_ids = self.Index.docs.keys()
+        all_doc_ids = self.getIndex().docs.keys()
         no_score = list( set(all_doc_ids) - set(docs_with_score))
         for doc_id in no_score:
             list_of_sorted_scores.append((doc_id, -sys.maxint))
@@ -41,6 +41,9 @@ class Vectoriel(IRmodel):
 
     def getName(self):
         return self.Weighter.getName()
+        
+    def getIndex(self):
+        return self.Weighter.Index
         
     def getScores(self,query):
         """Calculating a score for all documents with respect to the stems of query """
@@ -86,7 +89,10 @@ class LanguageModel(IRmodel):
     def __init__(self, Index, lissage_term):
         self.l_term = lissage_term
         self.Index = Index
-        self.corpus_size = float(Index.total_corpus_size)     
+        self.corpus_size = float(Index.total_corpus_size) 
+        
+    def getIndex(self):
+        return self.Index
     
     def getName(self):
         print "Language Model"
@@ -148,6 +154,9 @@ class Okapi(IRmodel):
         
     def getName(self):
         return "Okapi"
+    
+    def getIndex(self):
+        return self.Index
         
     def idf_probabilistic(self):
         """ Probabilistic Inverse Document Frequency

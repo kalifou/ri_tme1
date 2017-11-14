@@ -42,6 +42,6 @@ if __name__ == "__main__":
     fname = "data/cacm/cacm.txt"
     query_file = "data/cacm/cacm.qry"
     relevance_file = "data/cacm/cacm.rel"
-    
-    eval_platform = EvalIRModel(fname,query_file,relevance_file,"Okapi")
+
+    eval_platform = EvalIRModel(fname,query_file,relevance_file)
     eval_platform.eval()
