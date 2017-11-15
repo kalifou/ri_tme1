@@ -44,4 +44,5 @@ if __name__ == "__main__":
     relevance_file = "data/cacm/cacm.rel"
 
     eval_platform = EvalIRModel(fname,query_file,relevance_file)
-    eval_platform.eval()
+    #eval_platform.eval()
+    models_recall, models_inter_prec, models_AP = eval_platform.eval_std()

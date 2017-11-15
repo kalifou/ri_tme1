@@ -11,6 +11,7 @@ from Weighter import Binary, TF, TF_IDF, Log, Log_plus
 from IRmodel import Vectoriel, Okapi, LanguageModel
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
+from collections import defaultdict
 from Index import Index
 from QueryParser import QueryParser
 import os.path
@@ -102,13 +103,12 @@ class Eval_P(EvalMeasure):
         precision = []
         N_retrieved = len(retrieved)
         N_relevant = len(relevant_doc)
-        print N_relevant,N_retrieved
+        #print N_relevant,N_retrieved
         for i in xrange(N_retrieved):
             
             numerator = self.getNumRecall(relevant_doc, retrieved[0:i+1])
             precision.append( numerator /(i+1)) # simple precision meas.
             recall.append(  numerator/ N_relevant ) # simple recall meas.
-        
         interpoled_precision = [max(precision[i:]) for i in xrange(len(precision))]
         return recall, interpoled_precision,precision
 
@@ -162,7 +162,7 @@ class EvalIRModel(object):
         self.relevance_file = relevance_file
         self.query_parser = QueryParser(self.query_file, self.relevance_file)  
     
-    def eval_std(self):  
+    def eval_std(self, verbose=True):  
         """ Evaluate the a set of query using a set of different Vector Models 
             Todo : calculate mean & std of each model on the whole query dataset
             DRAFT !
@@ -173,30 +173,53 @@ class EvalIRModel(object):
         Eval = Eval_P()
         EvalAP = Eval_AP()
         
-        recall_model_i = dict() # {model_i:(recall,mean)}
-        prec_model_i = dict()
+        models_recall = defaultdict(list)
+        models_inter_prec = defaultdict(list)
+        models_prec = defaultdict(list)
+        models_AP = defaultdict(float)
         
         for i,m in enumerate(self.models):
+            
+            m_name = m.getName()
+            if verbose:
+                print "\n\nModel : ", m_name
+            
             query_result = 0
+            query_nb = 0
             self.query_parser = QueryParser(self.query_file, self.relevance_file)
             Q = self.query_parser.nextQuery()
-        
+            query_nb += 1
             while (Q != -1):
                 
-                print "\n\nModel : ", m.getName()
                 query_result = m.getRanking(Q.getTf())
-                recall, interpolated_prec,precision = Eval.evaluation(Q, query_result)
-                #Display first 10 values to see performances
-                print 'recall :', recall[0:10]
-                print 'precision : ',precision[0:10]
-                print 'inter_precision : ',interpolated_prec [0:10]
-                self.plot_(recall, interpolated_prec,precision) 
-                average_precision = EvalAP.evaluation(Q, query_result)
-                print 'AP: ', average_precision
-                Q = self.query_parser.nextQuery()
+                recall, interpolated_prec, prec = Eval.evaluation(Q, query_result)
                 
-            recall_model_i[i] = ()
-            prec_model_i[i] = ()
+                #accumulate results
+                if not models_recall.has_key(m_name):
+                    models_recall[m_name] = np.array(recall)
+                    models_inter_prec[m_name] = np.array(interpolated_prec)
+                    models_prec[m_name] = np.array(prec)
+                    models_AP[m_name] = EvalAP.evaluation(Q, query_result)
+                else:
+                    models_recall[m_name] += np.array(recall)
+                    models_inter_prec[m_name] += np.array(interpolated_prec)
+                    models_prec[m_name] += np.array(prec)
+                    models_AP[m_name] += EvalAP.evaluation(Q, query_result)
+
+                Q = self.query_parser.nextQuery()
+                query_nb += 1
+               
+            #average results for model
+            models_recall[m_name] /= query_nb
+            models_inter_prec[m_name] /= query_nb
+            models_prec[m_name] /= query_nb
+            models_AP[m_name] /= query_nb
+            
+            if verbose:
+                self.plot_(models_recall[m_name], models_inter_prec[m_name], models_prec[m_name])
+                print 'AP: ',  models_AP[m_name]
+            
+        return models_recall, models_inter_prec, models_AP
         
     def eval(self): 
         """ Ploting Interpolated Precision-recall for a set of models """
@@ -212,12 +235,14 @@ class EvalIRModel(object):
             removeUnknownStems(Q, self.Index)
             for i,m in enumerate(self.models):
                 print "\n\nModel : ", m.getName()
+                print Q.getText() 
+
                 query_result = m.getRanking(Q.getTf())
                 recall, interpolated_prec,precision = Eval.evaluation(Q, query_result)
                 #Display first 10 values to see performances
-                print 'recall :', recall[0:10]
-                print 'precision : ',precision[0:10]
-                print 'inter_precision : ',interpolated_prec [0:10]
+                #print 'recall :', recall[0:10]
+                #print 'precision : ',precision[0:10]
+                #print 'inter_precision : ',interpolated_prec [0:10]
                 self.plot_(recall, interpolated_prec,precision) 
                 average_precision = EvalAP.evaluation(Q, query_result)
                 print 'AP: ', average_precision
