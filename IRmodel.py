@@ -25,11 +25,14 @@ class IRmodel(object):
         
         # Now add all docs without any score at the end of the list
         docs_with_score = scores.keys()
+
         all_doc_ids = self.getIndex().docs.keys()
+    
         no_score = list( set(all_doc_ids) - set(docs_with_score))
+
         for doc_id in no_score:
             list_of_sorted_scores.append((doc_id, -sys.maxint))
-              
+   
         return np.array(list_of_sorted_scores)
 
 class Vectoriel(IRmodel):
@@ -66,7 +69,7 @@ class Vectoriel(IRmodel):
                 continue
             
             for doc_id, w_stem in weights_stem.items():
-                doc_score[doc_id] = doc_score.get(doc_id, 0) + weights_query[stem] * w_stem
+                doc_score[str(doc_id)] = doc_score.get(str(doc_id), 0) + weights_query[stem] * w_stem
            
         if self.normalized:
             #print doc_score.keys()
@@ -79,7 +82,7 @@ class Vectoriel(IRmodel):
                 #print'PREVIOUS SCORE'
                 #print doc_score[doc_id]
                 #print 'NEW SCORE'
-                doc_score[doc_id] /= (query_norm * self.Weighter.norm[str(doc_id)])
+                doc_score[doc_id] /= (query_norm * self.Weighter.norm[doc_id])
                 #print doc_score[doc_id]
          
         return doc_score
