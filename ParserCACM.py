@@ -146,6 +146,7 @@ class ParserCACM(Parser):
         other["text"]=texte
         other["author"]=author
         other["keywords"]=kw
+        other["links"] = links
         
         doc=Document(identifier,title+" \n "+author+" \n "+kw+" \n "+texte,other);
         

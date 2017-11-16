@@ -39,17 +39,24 @@ class Index(object):
              if (doc == None):
                  index.close()
                  break
-             # Getting the Bow                    
+             #get the Bow
              bow = self.textRepresenter.getTextRepresentation(doc.getText())
              self.total_corpus_size += sum(bow.values())
              str_bow = str(bow)
-             doc_id = doc.getId()
-             self.docs[doc_id] = (index.tell(), len(str_bow))
              
-             #stores  the source,position and length of document as   [source_path, position, length]
+             #get hyperlinks
+             str_links = doc.get("links")
+             
+             #stores  the source position and length of bow and links for document
+             doc_id = doc.getId()
+             self.docs[doc_id] = (index.tell(), len(str_bow), len(str_links))
+             
+             #store source of doc
              self.docFrom[doc_id] = doc.get("from").split(';')
-             #store in file
+             
+             #write in file
              index.write(str_bow)
+             index.write(str_links)
              
              #STEP 1 for inv index: gather size needed for each term
              for stem,val in bow.iteritems():
@@ -91,18 +98,24 @@ class Index(object):
                  inv_index.write(str_wrt)
                  pos[stem] = pos.get(stem,0)+ len(str_wrt)
              
-        
-        
-            
     #Return bow representation of a document given its ID
     def getTfsForDoc(self,doc_id):
-        pos, size = self.docs[doc_id]
+        pos, bow_size,_ = self.docs[doc_id]
         index = open(self.index_file,'r')
         index.seek(pos)
-        bow = index.read(size)
+        bow = index.read(bow_size)
         index.close()
         return ast.literal_eval(bow)
-    
+        
+    #return document's hyperlinks list (list of doc_ids)    
+    def getLinksForDoc(self,doc_id):
+        pos, bow_size, links_size = self.docs[doc_id]
+        index = open(self.index_file,'r')
+        index.seek(pos + bow_size)
+        str_links = index.read(links_size)
+        index.close()       
+        return str_links.split(';')[0:-1]
+        
     #return -1 for unknown stem, tf otherwise
     def getTfsForStem(self,stem):
 
