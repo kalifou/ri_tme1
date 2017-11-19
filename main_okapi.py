@@ -31,11 +31,13 @@ if __name__ == "__main__":
     
 ##########################################################
 # This eval gives poor results : I will investigate a bit later
-    fname = "data/cacm/cacm.txt"
-    query_file = "data/cacm/cacm.qry"
-    relevance_file = "data/cacm/cacm.rel"
+    pre="cacm"
+    fname = "data/"+pre+"/"+pre+".txt"
+    query_file = "data/"+pre+"/"+pre+".qry"
+    relevance_file = "data/"+pre+"/"+pre+".rel"
     
     type = "Okapi"
-    eval_platform = EvalIRModel(fname,query_file,relevance_file,type=type)
+    eval_platform = EvalIRModel(fname,query_file,relevance_file,model_type=type)
     eval_platform.eval()
+    #models_recall, models_inter_prec, models_AP = eval_platform.eval_std()
     

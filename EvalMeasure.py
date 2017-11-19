@@ -129,7 +129,7 @@ class Eval_AP(EvalMeasure):
                 precisions.append(self.getNumRecall(relevant_doc, retrieved[0:i+1]) / (i+1))
                 
         #average precision
-        return 0 if len(precisions) == 0 else sum(precisions) / float(len(precisions))
+        return 0 if len(precisions) == 0 else np.mean(precisions)
  
 class EvalIRModel(object):
     

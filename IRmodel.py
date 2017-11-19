@@ -82,7 +82,7 @@ class Vectoriel(IRmodel):
                 #print'PREVIOUS SCORE'
                 #print doc_score[doc_id]
                 #print 'NEW SCORE'
-                doc_score[doc_id] /= (query_norm * self.Weighter.norm[doc_id])
+                doc_score[doc_id] /= (query_norm * self.Weighter.norm.get(doc_id,100000))
                 #print doc_score[doc_id]
          
         return doc_score
@@ -137,7 +137,7 @@ class Okapi(IRmodel):
     
     def __init__(self,Index):
         """Setting the params"""
-        self.k1 = np.random.uniform(1,2)
+        self.k1 = 1. #np.random.uniform(1,2)
         self.b = 0.75
         self.Weighter = TF(Index)
         self.Index = Index
@@ -178,12 +178,16 @@ class Okapi(IRmodel):
     def f(self,q,d):
         """Score measuring how well Query q matches Document d"""
         score = 0.0        
+        tfs = self.Weighter.getDocWeightsForDoc(d)
         for t in q:
-            num = (self.k1 + 1)*  self.Weighter.getDocWeightsForStem(t).get(d,0.)
-            denom = self.k1 * ( (1-self.b) + self.b * self.L[d] / self.L_moy) \
-                                + self.Weighter.getDocWeightsForStem(t).get(d,0.)
+            num = (self.k1 + 1)*  tfs.get(t,0) #getDocWeightsForStem(t).get(d,0.)
+            denom = self.k1 * ( (1-self.b) + self.b * (self.L[d] / self.L_moy)) \
+                                + tfs.get(t,0) #getDocWeightsForStem(t).get(d,0.)
+            #print 'num :',num
             #print 'denom :',denom
+            #print "idf prb :",self.idf_probabilistic.get(t,0.0)
             score += self.idf_probabilistic.get(t,0.0) * (num / denom)                                        
+        #print "score :",score
         return score        
     
     def getScores(self,query):        
@@ -192,4 +196,5 @@ class Okapi(IRmodel):
         docs = self.L.keys()
         for doc_id in docs :
             scores[doc_id] = self.f(query,doc_id)
+        #print "scores :",scores
         return scores
