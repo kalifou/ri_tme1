@@ -38,6 +38,6 @@ if __name__ == "__main__":
     
     type = "Okapi"
     eval_platform = EvalIRModel(fname,query_file,relevance_file,model_type=type)
-    eval_platform.eval()
-    #models_recall, models_inter_prec, models_AP = eval_platform.eval_std()
+    #eval_platform.eval()
+    models_recall, models_inter_prec, models_AP = eval_platform.eval_std()
     
