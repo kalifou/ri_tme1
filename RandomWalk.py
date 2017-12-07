@@ -8,6 +8,9 @@ import numpy as np
 from Index import *
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
+import sys
+import os
+import pickle
 
 class RandomWalk(object):
     def __init__(self,index):
@@ -43,17 +46,53 @@ class PageRank(RandomWalk):
             print "Step : ",cpt,", Sum of abs. error (mu) : ",sum
             cpt+=1
         print "...Converged!"
+        
     def get_mu(self):
         return self.mu
 
 class Hits(RandomWalk):
-    def __init__(self,N_pages):
+    """
+    descr...
+    """
+    def __init__(self,N_pages, N_iters=200):
         self.N_pages = N_pages
+        self.N_iters = N_iters
         
-    def randomWalk(self, A):
-        self.a = np.zeros((self.N_pages,1)) + 1./self.N_pages 
-        self.h = np.zeros((self.N_pages,1)) + 1./self.N_pages 
-              
+    def randomWalk(self, A, P_m, Succ_m, Index_P, Counter_Index_P):
+        """descr...
+        """
+        # Authority nodes a
+        self.a = np.ones(self.N_pages)
+        # Hub nods h
+        self.h = np.ones(self.N_pages) 
+
+        for t in range(self.N_iters):
+            print " iter t :",t
+            for i in range(N_pgs):
+                Js = P_m.get(i,[])
+                if Js != []:
+                    for j in Js: # j -> i
+                        self.a[i] += self.h[j]
+                else:
+                    pass
+                Succ_i,l_i = Succ_m.get(i,[])
+                if Succ_i != []:
+                    for j in Succ_i: # i -> j
+                        if j != '' and "." not in j :#idx != "Unknown_Doc_id":
+                            self.h[i] += self.a[int(j)]
+                else: 
+                    pass
+                
+            # 2-Normalizing a & h
+            self.a = self.a / np.linalg.norm(self.a,2)
+            self.h = self.h / np.linalg.norm(self.h,2)
+            
+        print "As :",self.a[1:10]
+        print "Hs :",self.h[1:10]
+    
+    def get_a(self):
+        return self.a
+        
 
 def get_Pre_Succ(I):
     """returns Succ & Prec"""
@@ -63,7 +102,7 @@ def get_Pre_Succ(I):
     Index_P = { id:idx for idx,id in enumerate(Docs_id)}
     Counter_Index_P = { idx:id for idx,id in enumerate(Docs_id)}
     
-    print "Building Pi..."
+    print "\nBuilding Pi..."
     Succ = { Index_P[p]:(I.getLinksForDoc(p),len(I.getLinksForDoc(p))) for p in Docs_id }
     P = {}
     for e in Succ:
@@ -88,17 +127,31 @@ def get_A(P,Succ):
             elif j in Pi: # j precedes i
                 A[i][j] = 1./lj                
     return A
-    
+
+def MAP():
+    """
+    evaluation
+    """
+    pass
+
 if __name__ == "__main__":
     index = None
     
     d = 0.6
-    print "Building Index..."
-    parser = ParserCACM()
-    textRepresenter = PorterStemmer() 
     fname = "data/cacm/cacm.txt"
-    I = Index(parser,textRepresenter)
-    I.indexation(fname)
+    
+    sys.stdout.write("Indexing database...")
+    sys.stdout.flush()
+    if os.path.isfile('Index.p'):
+       I = pickle.load( open( "Index.p", "rb" ) ) 
+    
+    else:
+        parser = ParserCACM()
+        textRepresenter = PorterStemmer()
+        I = Index(parser,textRepresenter)
+        I.indexation(fname)
+        I.parser = None
+        pickle.dump( I, open( "Index.p", "wb" ) )
     
     # Getting Matrices of Predecessors, Successors, Index & Inv code, Nb Pages 
     P, Succ, Index_P, Counter_Index_P, N_pgs = get_Pre_Succ(I)
@@ -107,8 +160,10 @@ if __name__ == "__main__":
     
     print "Starting PageRank..."   
     print "Number of pages :", N_pgs       
-    pr = PageRank(N_pgs, d) 
-    pr.randomWalk(A)
-    mu = pr.get_mu()
+#    pr = PageRank(N_pgs, d) 
+#    pr.randomWalk(A)
+#    mu = pr.get_mu()
+    hts = Hits(N_pgs)
+    hts.randomWalk(A, P, Succ, Index_P, Counter_Index_P)
     
     
