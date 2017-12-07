@@ -142,8 +142,9 @@ class Index(object):
         t = str[:-1].split(';')
         d = {}
         for e in t:
-            e[1:-1].split(':')
-            [id,freq] = e[1:-1].split(':')
-            d[int(id)] = int(freq)
+            splt = e[1:-1].split(':')
+            if len(splt) > 1: 
+                [id,freq] = splt #e[1:-1].split(':')
+                d[int(id)] = int(freq)
         return d
     

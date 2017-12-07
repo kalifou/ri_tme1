@@ -5,19 +5,99 @@ Created on Mon Nov 27 22:32:40 2017
 @author: kalifou
 """
 import numpy as np
-from Index import *
-from ParserCACM import ParserCACM
-from TextRepresenter import PorterStemmer
-import sys
-import os
-import pickle
+from Index import Index
+
+
+def get_Pre_Succ(I):
+    """returns Succ & Prec"""
+    Docs = I.docs
+    Docs_id = Docs.keys()
+    N_pgs = len(Docs_id)
+    Index_P = { id:idx for idx,id in enumerate(Docs_id)}
+    Counter_Index_P = { idx:id for idx,id in enumerate(Docs_id)}
+    
+    print "\nBuilding Pi..."
+    Succ = { Index_P[p]:(I.getLinksForDoc(p),len(I.getLinksForDoc(p))) for p in Docs_id }
+    P = {}
+    for e in Succ:
+        succ_e,l_e = Succ[e]
+        for s in succ_e:    
+            if Index_P.get(s,"Unknown_Doc_id") not in P:
+                P[Index_P.get(s,"Unknown_Doc_id")] = []
+            P[Index_P.get(s,"Unknown_Doc_id")].append(e) 
+    
+    return P,Succ,Index_P,Counter_Index_P,N_pgs
+    
+def max_K(list,K):
+    """
+    returning at most the first K elements of the list
+    """
+    l = len(list)
+    res = list
+    if l > K:
+        res = list[:K]
+    return res
+    
+def get_Pre_Succ_seeds(Seeds, K, I):
+    """returns Succ & Prec"""
+    Docs_id = [ elt[0] for elt  in Seeds]
+    N_pgs = len(Docs_id)
+    Index_P = { id:idx for idx,id in enumerate(Docs_id)}
+    Counter_Index_P = { idx:id for idx,id in enumerate(Docs_id)}
+    
+    print "\nBuilding Pi..."
+    Succ = { Index_P[p]:(max_K( I.getLinksForDoc(p),K),len(I.getLinksForDoc(p))) for p in Docs_id }
+    P = {}
+    for e in Succ:
+        succ_e,l_e = Succ[e]
+        for s in succ_e:    
+            if Index_P.get(s,"Unknown_Doc_id") not in P:
+                P[Index_P.get(s,"Unknown_Doc_id")] = []
+            P[Index_P.get(s,"Unknown_Doc_id")].append(e)  
+    return P,Succ,Index_P,Counter_Index_P,N_pgs
+
+def get_A(P,Succ,N_pgs):
+    print "Building Matrix A..."
+    A = np.zeros((N_pgs,N_pgs))
+    for i in range(N_pgs):
+        for j in range(N_pgs):
+            Pi= P.get(i,[])
+            Succ_j,lj = Succ[j] 
+            
+            if lj==0:  #j is isolated
+                A[i][j] = 1./N_pgs
+                
+            elif j in Pi: # j precedes i
+                A[i][j] = 1./lj                
+    return A
+
+def select_G_q( n, k, query, model,I):
+    """
+    params :    
+    n : number of seed documents
+    k : number of entering links to consider for the seeds
+    query : query the graph is being built for 
+    model : model to select the seeds relevant for the input query
+    """
+    
+    # Selecting the scores of docs with respect to the query
+    docs_scores = model.getScores(query)
+    # Ordering the docs by descending scores (D,score)
+    desc_dcs_scores = sorted(docs_scores.iteritems(), key=lambda (k,v): (v,k),reverse=True)
+    # Selecting n best seeds 
+    seeds = desc_dcs_scores[:n]
+    # Building the graph using these seeds & parameter k (max number of entering links to consider)
+    return  get_Pre_Succ_seeds(seeds, k,I)
 
 class RandomWalk(object):
-    def __init__(self,index):
+    def __init__(self,index,N_pgs):
         self.index = index
+        self.N_pages = N_pgs
+
 
     def randomWalk(self):
         raise NotImplementedError('Always abstract class') 
+        
     
 class PageRank(RandomWalk):
     
@@ -47,8 +127,9 @@ class PageRank(RandomWalk):
             cpt+=1
         print "...Converged!"
         
-    def get_mu(self):
-        return self.mu
+    def get_result(self,Counter_Index):
+        r = { Counter_Index[k]: float(self.mu[k]) for k in range(len(self.mu)) }
+        return r #sorted(r.iteritems(), key=lambda (k,v): (v,k),reverse=True)
 
 class Hits(RandomWalk):
     """
@@ -68,18 +149,26 @@ class Hits(RandomWalk):
 
         for t in range(self.N_iters):
             print " iter t :",t
-            for i in range(N_pgs):
+            for i in range(self.N_pages):
                 Js = P_m.get(i,[])
+                
                 if Js != []:
+                    sj= 0.
                     for j in Js: # j -> i
-                        self.a[i] += self.h[j]
+                        sj += self.h[j]
+                    self.a[i] = sj
+                    
                 else:
-                    pass
+                    pass                
+                
                 Succ_i,l_i = Succ_m.get(i,[])
                 if Succ_i != []:
-                    for j in Succ_i: # i -> j
+                    sj = 0.
+                    for j in Succ_i: # i -> j                        
                         if j != '' and "." not in j :#idx != "Unknown_Doc_id":
-                            self.h[i] += self.a[int(j)]
+                            print j
+                            sj += self.a[int(j)]
+                    self.h[i] = sj
                 else: 
                     pass
                 
@@ -90,80 +179,8 @@ class Hits(RandomWalk):
         print "As :",self.a[1:10]
         print "Hs :",self.h[1:10]
     
-    def get_a(self):
-        return self.a
-        
+    def get_result(self,Counter_Index):
+        r = { Counter_Index[k]: float(self.a[k]) for k in range(len(self.a)) }
+        return r #sorted(r.iteritems(), key=lambda (k,v): (v,k),reverse=True
 
-def get_Pre_Succ(I):
-    """returns Succ & Prec"""
-    Docs = I.docs
-    Docs_id = Docs.keys()
-    N_pgs = len(Docs_id)
-    Index_P = { id:idx for idx,id in enumerate(Docs_id)}
-    Counter_Index_P = { idx:id for idx,id in enumerate(Docs_id)}
-    
-    print "\nBuilding Pi..."
-    Succ = { Index_P[p]:(I.getLinksForDoc(p),len(I.getLinksForDoc(p))) for p in Docs_id }
-    P = {}
-    for e in Succ:
-        succ_e,l_e = Succ[e]
-        for s in succ_e:    
-            if Index_P.get(s,"Unknown_Doc_id") not in P:
-                P[Index_P.get(s,"Unknown_Doc_id")] = []
-            P[Index_P.get(s,"Unknown_Doc_id")].append(e)  
-    return P,Succ,Index_P,Counter_Index_P,N_pgs
-    
-def get_A(P,Succ):
-    print "Building Matrix A..."
-    A = np.zeros((N_pgs,N_pgs))
-    for i in range(N_pgs):
-        for j in range(N_pgs):
-            Pi= P.get(i,[])
-            Succ_j,lj = Succ[j] 
-            
-            if lj==0:  #j is isolated
-                A[i][j] = 1./N_pgs
-                
-            elif j in Pi: # j precedes i
-                A[i][j] = 1./lj                
-    return A
-
-def MAP():
-    """
-    evaluation
-    """
-    pass
-
-if __name__ == "__main__":
-    index = None
-    
-    d = 0.6
-    fname = "data/cacm/cacm.txt"
-    
-    sys.stdout.write("Indexing database...")
-    sys.stdout.flush()
-    if os.path.isfile('Index.p'):
-       I = pickle.load( open( "Index.p", "rb" ) ) 
-    
-    else:
-        parser = ParserCACM()
-        textRepresenter = PorterStemmer()
-        I = Index(parser,textRepresenter)
-        I.indexation(fname)
-        I.parser = None
-        pickle.dump( I, open( "Index.p", "wb" ) )
-    
-    # Getting Matrices of Predecessors, Successors, Index & Inv code, Nb Pages 
-    P, Succ, Index_P, Counter_Index_P, N_pgs = get_Pre_Succ(I)
-    # Getting the incidence Matrix A
-    A = get_A(P, Succ)    
-    
-    print "Starting PageRank..."   
-    print "Number of pages :", N_pgs       
-#    pr = PageRank(N_pgs, d) 
-#    pr.randomWalk(A)
-#    mu = pr.get_mu()
-    hts = Hits(N_pgs)
-    hts.randomWalk(A, P, Succ, Index_P, Counter_Index_P)
-    
     

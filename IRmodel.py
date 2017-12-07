@@ -6,7 +6,7 @@ Created on Wed Oct 18 18:43:53 2017
 import numpy as np
 import sys
 from Weighter import TF
-
+#from RandomWalk import *
 class IRmodel(object):
     
     def __init__(self):
@@ -198,3 +198,29 @@ class Okapi(IRmodel):
             scores[doc_id] = self.f(query,doc_id)
         #print "scores :",scores
         return scores
+        
+class RankModel(IRmodel):
+    def __init__(self, I, n=1000, K=10):
+        self.n = n
+        self.K = K
+        
+    def getScores(query):
+        o = Okapi(I)
+        P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(n, K, query, o, I)
+        pr = PageRank(N_pgs, d) 
+        A = get_A(P, Succ)  
+        pr.randomWalk(A)
+        return pr.get_result(Counter_Index_P)
+        
+class hitsModel(IRmodel):
+    def __init__(self, I, n=1000, K=10):
+        self.n = n
+        self.K = K
+        
+    def getScores(query):
+        o = Okapi(I)
+        P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(n, K, query, o, I)
+        pr = PageRank(N_pgs, d) 
+        A = get_A(P, Succ)  
+        pr.randomWalk(A)
+        return pr.get_result(Counter_Index_P)
