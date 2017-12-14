@@ -33,12 +33,15 @@ def intersection(l1,l2):
 
 def removeUnknownStems(Query,Index):
     """Remove unknown stem from query tf"""
+    removed_stems = ""
     query_tf = Query.getTf()
     for stem in query_tf.keys():
         #if unknown stem remove from query
         if not Index.stems.has_key(stem):
-                print "Unknown stem removed: " + stem
+                removed_stems += " " + stem + " "
                 query_tf.pop(stem)
+    #if len(removed_stems) > 0:
+        #print "Unknown stems: " + removed_stems
 
 def initIndex(database_file):
     """Init Index or load it if previously computed"""
@@ -145,16 +148,17 @@ class Eval_AP(EvalMeasure):
         retrieved = np.array(retrieved_doc,dtype=int)[:,0]
         #print "retrieved after numpy type : ",type(retrieved[0])
         precisions = []
-                
-        for i,doc in enumerate(xrange(len(retrieved))):
+        #print "relevant docs: " + str(relevant_doc)
+        for i,doc in enumerate(retrieved):
             
             #if current doc is relevant, add current precision
-            if str(doc) in relevant_doc:
-                print "i,rd,retr,nmRecal :",i,relevant_doc,retrieved,self.getNumRecall(relevant_doc, retrieved[0:i+1]) / (i+1.)
+            if doc in relevant_doc:
+                #print "doc relevant :" + str(doc)
+                #print "i,retr,nmRecal :",i,retrieved,self.getNumRecall(relevant_doc, retrieved[0:i+1]) / (i+1.)
                 
                 precisions.append(self.getNumRecall(relevant_doc, retrieved[0:i+1]) / (i+1))
                 
-        print "prec :",precisions
+        #print "prec :",precisions
         #average precision
         return 0 if len(precisions) == 0 else np.mean(precisions)
  
@@ -176,15 +180,17 @@ class EvalIRModel(object):
 
         self.Index = initIndex(index_file)
         self.Index
+        #print "hello"
         
         if model_type  == "Vectoriel":
             self.models = initModels(self.Index,model_type)
             
         elif model_type == "Language":
+            print "Init of Language model"
             self.models = [LanguageModel(self.Index,0.9)]
         else :
             self.models = [Okapi(self.Index)]
-            
+        print type(self.models[0])    
         self.query_file = query_file
         self.relevance_file = relevance_file
         self.query_parser = QueryParser(self.query_file, self.relevance_file)  
@@ -206,7 +212,7 @@ class EvalIRModel(object):
         models_AP = defaultdict(float)
         
         for i,m in enumerate(self.models):
-            
+
             m_name = m.getName()
             if verbose:
                 print "\n\nModel : ", m_name
@@ -217,14 +223,14 @@ class EvalIRModel(object):
             Q = self.query_parser.nextQuery()
             query_nb += 1
             while (Q != -1):
-                #print Q.getText()
-                #print Q.getRelevantDocs()
-                removeUnknownStems(Q, self.Index)
-                
+                #print "hhh"
                 #go to next query if no relevant document related to query
                 if Q.getRelevantDocs()[0][0] == None:
+                    #print "query ignored: no relevant docs"
                     Q = self.query_parser.nextQuery()
                     continue
+                
+                removeUnknownStems(Q, self.Index)
                 
                 query_result = m.getRanking(Q.getTf())
                 recall, interpolated_prec, prec = Eval.evaluation(Q, query_result)
@@ -236,7 +242,7 @@ class EvalIRModel(object):
                     models_prec[m_name] = np.array(prec)
                     models_AP[m_name] = EvalAP.evaluation(Q, query_result)
                 else:
-                    print len(recall),len(models_recall[m_name])
+                    #print len(recall),len(models_recall[m_name])
                     models_recall[m_name] += np.array(recall)
                     models_inter_prec[m_name] += np.array(interpolated_prec)
                     models_prec[m_name] += np.array(prec)
@@ -268,6 +274,12 @@ class EvalIRModel(object):
         query_result = 0
         Q = self.query_parser.nextQuery()
         while (Q != -1):
+            #go to next query if no relevant document related to query
+            if Q.getRelevantDocs()[0][0] == None:
+                #print "query ignored: no relevant docs"
+                Q = self.query_parser.nextQuery()
+                continue
+            
             removeUnknownStems(Q, self.Index)
             for i,m in enumerate(self.models):
                 print "\n\nModel : ", m.getName()

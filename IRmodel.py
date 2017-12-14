@@ -112,7 +112,7 @@ class LanguageModel(IRmodel):
         return self.Index
     
     def getName(self):
-        print "Language Model"
+        return "Language Model"
         
     def getScores(self,query):
         """Calculating a score for all documents with respect to the stems of query """
