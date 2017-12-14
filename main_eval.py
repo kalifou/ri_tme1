@@ -42,7 +42,7 @@ if __name__ == "__main__":
     fname = "data/cacm/cacm.txt"
     query_file = "data/cacm/cacm.qry"
     relevance_file = "data/cacm/cacm.rel"
-
-    eval_platform = EvalIRModel(fname,query_file,relevance_file)
+    type = "Language"
+    eval_platform = EvalIRModel(fname,query_file,relevance_file,model_type="Vectoriel")
     #eval_platform.eval()
     models_recall, models_inter_prec, models_AP = eval_platform.eval_std()

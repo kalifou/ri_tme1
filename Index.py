@@ -105,6 +105,7 @@ class Index(object):
         index.seek(pos)
         bow = index.read(bow_size)
         index.close()
+        #print "bow-ast : ",bow, ast.literal_eval(bow)
         return ast.literal_eval(bow)
         
     #return document's hyperlinks list (list of doc_ids)    
@@ -121,7 +122,7 @@ class Index(object):
 
         if not self.stems.has_key(stem):
             print "Unknown stem:" + stem
-            return -1
+            return {}
 
         inv_index = open(self.inv_index_file,"r")
         pos, length = self.stems[stem]

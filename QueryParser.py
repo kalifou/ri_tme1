@@ -50,7 +50,7 @@ class QueryParser(object):
                 if(not self.relevant_docs.has_key(query_id)):
                     self.relevant_docs[query_id] = []
                 #A list is added per relevant doc for later use of couple (themes, score) 
-                self.relevant_docs.get(query_id).append([ data[1], None, None])
+                self.relevant_docs.get(query_id).append([ int(data[1]), None, None])
                 
     def nextQuery(self):
         """Return next Query object"""

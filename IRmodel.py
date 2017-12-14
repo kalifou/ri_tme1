@@ -20,20 +20,20 @@ class IRmodel(object):
         """Generic Ranking (ordered by desc) all the documents using how they score on the query"""
         
         scores = self.getScores(query)        
-        list_of_sorted_scores = list( (key,value) for key, value \
+        list_of_sorted_scores = list( (int(key),value) for key, value \
                             in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
         
         # Now add all docs without any score at the end of the list
-        docs_with_score = scores.keys()
+        docs_with_score = [ int(k) for k in scores.keys()]
 
-        all_doc_ids = self.getIndex().docs.keys()
-    
-        no_score = list( set(all_doc_ids) - set(docs_with_score))
-
+        all_doc_ids = [ int(k) for k in self.getIndex().docs.keys()]
+        #print "type id :",type(all_doc_ids[0])
+        no_score = list( set(all_doc_ids).difference(set(docs_with_score)))
+        #print "len ALL, NO, WITH",len(all_doc_ids),len(no_score),len(docs_with_score)
         for doc_id in no_score:
-            list_of_sorted_scores.append((doc_id, -sys.maxint))
+            list_of_sorted_scores.append((int(doc_id), -sys.maxint))
    
-        return np.array(list_of_sorted_scores)
+        return list_of_sorted_scores
 
 class Vectoriel(IRmodel):
 
@@ -87,6 +87,20 @@ class Vectoriel(IRmodel):
          
         return doc_score
         
+class RandomModel(IRmodel):
+    def __init__(self, Index, lissage_term):
+        self.l_term = lissage_term
+        self.Index = Index
+        self.corpus_size = float(Index.total_corpus_size)
+    def getIndex(self):
+        return self.Index
+    
+    def getName(self):
+        print "Language Model"
+        
+    def getScores(self,query):
+        return {}
+           
 class LanguageModel(IRmodel):
 
     def __init__(self, Index, lissage_term):

@@ -19,6 +19,12 @@ import pickle
 
 def intersection(l1,l2):
     """Intersection between list l1 & l2"""
+    #print 'L1 : ',l1
+    #print 'L2 : ',l2
+    #print "Inter : ",list(set(l1).intersection(l2))
+    assert(isinstance(l1[0],int))
+    print "type :", type(l2[0])
+    assert(isinstance(l2[0],int))
     return list(set(l1).intersection(l2))
 
 
@@ -98,7 +104,7 @@ class Eval_P(EvalMeasure):
         
     def evaluation(self, Query, retrieved_doc):
         relevant_doc = np.array(Query.getRelevantDocs())[:,0]
-        retrieved = np.array( retrieved_doc )[:,0]
+        retrieved = np.array( retrieved_doc ,dtype=int)[:,0]
         recall = []
         precision = []
         N_retrieved = len(retrieved)
@@ -119,15 +125,18 @@ class Eval_AP(EvalMeasure):
     
     def evaluation(self, Query, retrieved_doc):
         relevant_doc = np.array(Query.getRelevantDocs())[:,0]
-        retrieved = retrieved_doc[:,0]
+        retrieved = np.array(retrieved_doc,dtype=int)[:,0]
         precisions = []
                 
         for i,doc in enumerate(xrange(len(retrieved))):
             
             #if current doc is relevant, add current precision
             if str(doc) in relevant_doc:
+                print "i,rd,retr,nmRecal :",i,relevant_doc,retrieved,self.getNumRecall(relevant_doc, retrieved[0:i+1]) / (i+1.)
+                
                 precisions.append(self.getNumRecall(relevant_doc, retrieved[0:i+1]) / (i+1))
                 
+        print "prec :",precisions
         #average precision
         return 0 if len(precisions) == 0 else np.mean(precisions)
  
@@ -201,6 +210,7 @@ class EvalIRModel(object):
                     models_prec[m_name] = np.array(prec)
                     models_AP[m_name] = EvalAP.evaluation(Q, query_result)
                 else:
+                    print len(recall),len(models_recall[m_name])
                     models_recall[m_name] += np.array(recall)
                     models_inter_prec[m_name] += np.array(interpolated_prec)
                     models_prec[m_name] += np.array(prec)
