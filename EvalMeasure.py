@@ -22,8 +22,11 @@ def intersection(l1,l2):
     #print 'L1 : ',l1
     #print 'L2 : ',l2
     #print "Inter : ",list(set(l1).intersection(l2))
+    if len(l1) == 0:
+        print "l1 is empty !"
+    #print 'inter type = ',type(l1[0])
     assert(isinstance(l1[0],int))
-    print "type :", type(l2[0])
+    #print "type :", type(l2[0])
     assert(isinstance(l2[0],int))
     return list(set(l1).intersection(l2))
 
@@ -103,8 +106,16 @@ class Eval_P(EvalMeasure):
         pass
         
     def evaluation(self, Query, retrieved_doc):
+        #print "EVAL P"
         relevant_doc = np.array(Query.getRelevantDocs())[:,0]
+        if relevant_doc[0] == None: #NO RELEVANT DOC FOR QUERY
+            print "This query has no relevant docs, hence maximal accuracy returned"
+            max_recall = np.array([(float(i)/len(retrieved_doc)) for i in range(len(retrieved_doc))])
+            return max_recall,np.ones(len(retrieved_doc)),np.ones(len(retrieved_doc))
+        #print "relevant type : ",type(relevant_doc[0])
+        #print "retrieved type : ",type(retrieved_doc[0][0])
         retrieved = np.array( retrieved_doc ,dtype=int)[:,0]
+        #print "retrieved after numpy type : ",type(retrieved[0])
         recall = []
         precision = []
         N_retrieved = len(retrieved)
@@ -125,7 +136,14 @@ class Eval_AP(EvalMeasure):
     
     def evaluation(self, Query, retrieved_doc):
         relevant_doc = np.array(Query.getRelevantDocs())[:,0]
+        
+        if relevant_doc[0] == None: #NO RELEVANT DOC FOR QUERY
+            return 1
+        #print "EVAL AP"
+        #print "relevant type : ",type(relevant_doc[0])
+        #print "retrieved type : ",type(retrieved_doc[0][0])
         retrieved = np.array(retrieved_doc,dtype=int)[:,0]
+        #print "retrieved after numpy type : ",type(retrieved[0])
         precisions = []
                 
         for i,doc in enumerate(xrange(len(retrieved))):
@@ -199,6 +217,14 @@ class EvalIRModel(object):
             Q = self.query_parser.nextQuery()
             query_nb += 1
             while (Q != -1):
+                #print Q.getText()
+                #print Q.getRelevantDocs()
+                removeUnknownStems(Q, self.Index)
+                
+                #go to next query if no relevant document related to query
+                if Q.getRelevantDocs()[0][0] == None:
+                    Q = self.query_parser.nextQuery()
+                    continue
                 
                 query_result = m.getRanking(Q.getTf())
                 recall, interpolated_prec, prec = Eval.evaluation(Q, query_result)
