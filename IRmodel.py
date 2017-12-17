@@ -5,13 +5,17 @@ Created on Wed Oct 18 18:43:53 2017
 """
 import numpy as np
 import sys
-from Weighter import TF
-#from RandomWalk import *
+from Weighter import TF, TF_IDF,  Binary,Log_plus
+from RandomWalk import *
+
 class IRmodel(object):
     
     def __init__(self):
         pass
-    
+    def getName(self):
+        pass
+    def getIndex(self):
+        pass
     def getScores(self,query):
         """compute doncument's scores for a given query"""
         pass
@@ -214,15 +218,25 @@ class Okapi(IRmodel):
         return scores
         
 class RankModel(IRmodel):
-    def __init__(self, I, n=1000, K=10):
+    def __init__(self, I, n=10, K=10,d=.7):
         self.n = n
         self.K = K
+        self.Index = I
+        self.d = d
+    def getName(self):
+        return "PageRank"
         
-    def getScores(query):
-        o = Okapi(I)
-        P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(n, K, query, o, I)
-        pr = PageRank(N_pgs, d) 
-        A = get_A(P, Succ)  
+    def getIndex(self):
+        return self.Index
+        
+    def getScores(self,query):
+        w = Binary(self.Index) 
+        #w = TF_IDF(self.Index)
+        model = Vectoriel(self.Index,True, w)
+        #model = Okapi(self.Index)
+        P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(self.n, self.K, query, model, self.Index)
+        pr = PageRank(N_pgs, self.d) 
+        A = get_A(P, Succ, N_pgs)  
         pr.randomWalk(A)
         return pr.get_result(Counter_Index_P)
         

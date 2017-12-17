@@ -64,8 +64,9 @@ if __name__ == "__main__":
     pr.randomWalk(A)
     mu = pr.get_result(Counter_Index_P)
     print "MAX mu ",max(mu)  
-    print "Npages",N_pgs,pr.N_pages
-    hts = Hits(N_pgs,N_iters=100)
-    hts.randomWalk(A, P, Succ, Index_P, Counter_Index_P)
-    a = hts.get_result(Counter_Index_P)
-    print a
+#    print "Npages",N_pgs,pr.N_pages
+#    print "Random walk for HITS"
+#    hts = Hits(N_pgs,N_iters=100)
+#    hts.randomWalk(A, P, Succ, Index_P, Counter_Index_P)
+#    a = hts.get_result(Counter_Index_P)
+#    print a

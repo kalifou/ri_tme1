@@ -8,7 +8,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from Weighter import Binary, TF, TF_IDF, Log, Log_plus
-from IRmodel import Vectoriel, Okapi, LanguageModel
+from IRmodel import Vectoriel, Okapi, LanguageModel, RankModel
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from collections import defaultdict
@@ -176,7 +176,7 @@ class EvalIRModel(object):
         plt.show()
         
     def __init__(self, index_file, query_file, relevance_file,model_type="Vectoriel"):
-        """ model_type = Vectoriel | Okapi | Language """
+        """ model_type = Vectoriel | Okapi | Language | PageRank"""
 
         self.Index = initIndex(index_file)
         self.Index
@@ -188,8 +188,13 @@ class EvalIRModel(object):
         elif model_type == "Language":
             print "Init of Language model"
             self.models = [LanguageModel(self.Index,0.9)]
-        else :
+        elif model_type == "Okapi":
             self.models = [Okapi(self.Index)]
+        elif model_type == "PageRank":
+            self.models = [RankModel(self.Index)]
+        else:
+            pass
+            
         print type(self.models[0])    
         self.query_file = query_file
         self.relevance_file = relevance_file

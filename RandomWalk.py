@@ -110,7 +110,7 @@ class PageRank(RandomWalk):
         """
         self.d = d
         self.N_pages = N_pages
-        self.eps = 1e-5
+        self.eps = 1e-1
         
     def randomWalk(self, A):
         
