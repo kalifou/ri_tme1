@@ -40,7 +40,7 @@ def max_K(list,K):
     
 def get_Pre_Succ_seeds(Seeds, K, I):
     """returns Succ & Prec"""
-    Docs_id = [ elt[0] for elt  in Seeds]
+    Docs_id = [ str(elt[0]) for elt  in Seeds]
     N_pgs = len(Docs_id)
     Index_P = { id:idx for idx,id in enumerate(Docs_id)}
     Counter_Index_P = { idx:id for idx,id in enumerate(Docs_id)}
@@ -123,12 +123,12 @@ class PageRank(RandomWalk):
             prec = self.mu
             self.mu = ((1.-self.d)/self.N_pages) + self.d * np.dot(A,self.mu )
             sum = np.sum(abs(self.mu-prec))
-            print "Step : ",cpt,", Sum of abs. error (mu) : ",sum
+            #print "Step : ",cpt,", Sum of abs. error (mu) : ",sum
             cpt+=1
         print "...Converged!"
         
     def get_result(self,Counter_Index):
-        r = { Counter_Index[k]: float(self.mu[k]) for k in range(len(self.mu)) }
+        r = { int(Counter_Index[k]): float(self.mu[k]) for k in range(len(self.mu)) }
         return r #sorted(r.iteritems(), key=lambda (k,v): (v,k),reverse=True)
 
 class Hits(RandomWalk):
@@ -180,7 +180,7 @@ class Hits(RandomWalk):
         print "Hs :",self.h[1:10]
     
     def get_result(self,Counter_Index):
-        r = { Counter_Index[k]: float(self.a[k]) for k in range(len(self.a)) }
+        r = { int(Counter_Index[k]): float(self.a[k]) for k in range(len(self.a)) }
         return r #sorted(r.iteritems(), key=lambda (k,v): (v,k),reverse=True
 
     

@@ -23,19 +23,35 @@ class IRmodel(object):
     def getRanking(self,query):
         """Generic Ranking (ordered by desc) all the documents using how they score on the query"""
         
+#        scores = self.getScores(query)        
+#        list_of_sorted_scores = list( (int(key),value) for key, value \
+#                            in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
+#        
+#        # Now add all docs without any score at the end of the list
+#        docs_with_score = [ int(k) for k in scores.keys()]
+#
+#        all_doc_ids = [ int(k) for k in self.getIndex().docs.keys()]
+#        #print "type id :",type(all_doc_ids[0])
+#        no_score = list( set(all_doc_ids).difference(set(docs_with_score)))
+#        #print "len ALL, NO, WITH",len(all_doc_ids),len(no_score),len(docs_with_score)
+#        for doc_id in no_score:
+#            list_of_sorted_scores.append((int(doc_id), -sys.maxint))
+#   
+#        return list_of_sorted_scores
+        
         scores = self.getScores(query)        
         list_of_sorted_scores = list( (int(key),value) for key, value \
                             in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
         
         # Now add all docs without any score at the end of the list
-        docs_with_score = [ int(k) for k in scores.keys()]
+        docs_with_score = scores.keys()
 
         all_doc_ids = [ int(k) for k in self.getIndex().docs.keys()]
         #print "type id :",type(all_doc_ids[0])
         no_score = list( set(all_doc_ids).difference(set(docs_with_score)))
         #print "len ALL, NO, WITH",len(all_doc_ids),len(no_score),len(docs_with_score)
         for doc_id in no_score:
-            list_of_sorted_scores.append((int(doc_id), -sys.maxint))
+            list_of_sorted_scores.append((doc_id, -sys.maxint))
    
         return list_of_sorted_scores
 
@@ -73,8 +89,8 @@ class Vectoriel(IRmodel):
                 continue
             
             for doc_id, w_stem in weights_stem.items():
-                doc_score[str(doc_id)] = doc_score.get(str(doc_id), 0) + weights_query[stem] * w_stem
-           
+                #doc_score[str(doc_id)] = doc_score.get(str(doc_id), 0) + weights_query[stem] * w_stem
+                doc_score[int(doc_id)] = doc_score.get(int(doc_id), 0) + weights_query[stem] * w_stem
         if self.normalized:
             #print doc_score.keys()
             for doc_id in doc_score.keys():
@@ -86,7 +102,7 @@ class Vectoriel(IRmodel):
                 #print'PREVIOUS SCORE'
                 #print doc_score[doc_id]
                 #print 'NEW SCORE'
-                doc_score[doc_id] /= (query_norm * self.Weighter.norm.get(doc_id,100000))
+                doc_score[int(doc_id)] /= (query_norm * self.Weighter.norm.get(doc_id,100000))
                 #print doc_score[doc_id]
          
         return doc_score
@@ -135,15 +151,15 @@ class LanguageModel(IRmodel):
                 
                 #if doc had none of previous stems, score = sum of corpus probs
                 if not doc_scores.has_key(d):
-                    doc_scores[d] = init_score
+                    doc_scores[int(d)] = init_score
                     
                 doc_prob = stem_tf / float(sum(self.Index.getTfsForDoc(str(d)).values()))
-                doc_scores[d] += query[stem] * np.log(self.l_term * doc_prob + (1-self.l_term) * corpus_prob)
+                doc_scores[int(d)] += query[stem] * np.log(self.l_term * doc_prob + (1-self.l_term) * corpus_prob)
             
             #update scores for docs in doc_scores but without this stem
             doc_scores_without_stem = list(set(doc_scores.keys()) - set(docs_with_stem.keys()))
             for d in doc_scores_without_stem:
-                doc_scores[d] += (1-self.l_term) * corpus_prob
+                doc_scores[int(d)] += (1-self.l_term) * corpus_prob
             
             #update initial score for new documents
             init_score += (1-self.l_term) * corpus_prob
@@ -213,12 +229,12 @@ class Okapi(IRmodel):
         scores = {}        
         docs = self.L.keys()
         for doc_id in docs :
-            scores[doc_id] = self.f(query,doc_id)
+            scores[int(doc_id)] = self.f(query,doc_id)
         #print "scores :",scores
         return scores
         
 class RankModel(IRmodel):
-    def __init__(self, I, n=10, K=10,d=.7):
+    def __init__(self, I, n=200, K=200,d=.9):
         self.n = n
         self.K = K
         self.Index = I
@@ -230,8 +246,8 @@ class RankModel(IRmodel):
         return self.Index
         
     def getScores(self,query):
-        w = Binary(self.Index) 
-        #w = TF_IDF(self.Index)
+        #w = Binary(self.Index) 
+        w = TF_IDF(self.Index)
         model = Vectoriel(self.Index,True, w)
         #model = Okapi(self.Index)
         P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(self.n, self.K, query, model, self.Index)

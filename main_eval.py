@@ -6,7 +6,7 @@ from Weighter import Binary, TF, TF_IDF, Log, Log_plus
 from EvalMeasure import EvalIRModel
 import numpy as np
 import os.path
-
+import time
 
 def test_weighter():
     parser = ParserCACM()
@@ -38,11 +38,16 @@ def testQuery(query_tf, models ):
     
 
 if __name__ == "__main__":
-    
+    t1 = time.time()
     fname = "data/cacm/cacm.txt"
     query_file = "data/cacm/cacm.qry"
     relevance_file = "data/cacm/cacm.rel"
-    type = "PageRank"
+    type = "Vectoriel" # model_type = Vectoriel | Okapi | Language | PageRank
     eval_platform = EvalIRModel(fname,query_file,relevance_file,model_type=type)
-    #eval_platform.eval()
-    models_recall, models_inter_prec, models_AP = eval_platform.eval_std()
+    simple_eval = False    
+    
+    if simple_eval :        
+        eval_platform.eval()
+    else:
+        models_recall, models_inter_prec, models_AP = eval_platform.eval_std()
+    print "Exec duration(s) : ",time.time()-t1

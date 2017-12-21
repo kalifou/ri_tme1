@@ -154,16 +154,16 @@ class ParserCACM(Parser):
 
 #===============================================================================
 
-
+if __name__ == "__main__":
 #===============================================================================
-# a=ParserCACM()
-# a.initFile("../../data/cacm/cacm.txt")
-# x1=a.nextDocument()
-# print x1
-# x2=a.nextDocument()
-# print x2
-# x3=a.nextDocument()
-# print x3
-# x4=a.nextDocument()
-# print x4
+     a=ParserCACM()
+     a.initFile("../tme1/data/cacm/cacm.txt")
+     x1=a.nextDocument()
+     print x1
+     x2=a.nextDocument()
+     print x2
+     x3=a.nextDocument()
+     print x3
+     x4=a.nextDocument()
+     print x4
 #===============================================================================

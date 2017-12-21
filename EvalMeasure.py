@@ -19,14 +19,9 @@ import pickle
 
 def intersection(l1,l2):
     """Intersection between list l1 & l2"""
-    #print 'L1 : ',l1
-    #print 'L2 : ',l2
-    #print "Inter : ",list(set(l1).intersection(l2))
     if len(l1) == 0:
         print "l1 is empty !"
-    #print 'inter type = ',type(l1[0])
     assert(isinstance(l1[0],int))
-    #print "type :", type(l2[0])
     assert(isinstance(l2[0],int))
     return list(set(l1).intersection(l2))
 
