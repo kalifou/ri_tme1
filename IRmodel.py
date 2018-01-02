@@ -256,15 +256,21 @@ class RankModel(IRmodel):
         pr.randomWalk(A)
         return pr.get_result(Counter_Index_P)
         
-class hitsModel(IRmodel):
-    def __init__(self, I, n=1000, K=10):
+class HitsModel(IRmodel):
+    def __init__(self, I, n=100, K=100):
         self.n = n
         self.K = K
+        self.Index=I
+    def getName(self):
+        return "Hits"
         
-    def getScores(query):
-        o = Okapi(I)
-        P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(n, K, query, o, I)
-        pr = PageRank(N_pgs, d) 
-        A = get_A(P, Succ)  
-        pr.randomWalk(A)
-        return pr.get_result(Counter_Index_P)
+    def getIndex(self):
+        return self.Index
+        
+    def getScores(self,query):
+        w = TF_IDF(self.Index)
+        model = Vectoriel(self.Index,True, w)
+        P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(self.n, self.K, query, model, self.Index)
+        hts = Hits(N_pgs)
+        hts.randomWalk(P, Succ, Index_P)
+        return hts.get_result(Counter_Index_P)

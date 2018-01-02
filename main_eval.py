@@ -42,7 +42,7 @@ if __name__ == "__main__":
     fname = "data/cacm/cacm.txt"
     query_file = "data/cacm/cacm.qry"
     relevance_file = "data/cacm/cacm.rel"
-    type = "Vectoriel" # model_type = Vectoriel | Okapi | Language | PageRank
+    type = "Hits" # model_type = Vectoriel | Okapi | Language | PageRank | Hits
     eval_platform = EvalIRModel(fname,query_file,relevance_file,model_type=type)
     simple_eval = False    
     

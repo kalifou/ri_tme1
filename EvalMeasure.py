@@ -8,7 +8,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from Weighter import Binary, TF, TF_IDF, Log, Log_plus
-from IRmodel import Vectoriel, Okapi, LanguageModel, RankModel
+from IRmodel import Vectoriel, Okapi, LanguageModel, RankModel, HitsModel
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from collections import defaultdict
@@ -187,7 +187,9 @@ class EvalIRModel(object):
             self.models = [Okapi(self.Index)]
         elif model_type == "PageRank":
             self.models = [RankModel(self.Index)]
-        else:
+        elif model_type == "Hits":
+            self.models = [HitsModel(self.Index)]
+        else :
             pass
             
         print type(self.models[0])    
