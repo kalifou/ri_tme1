@@ -7,6 +7,7 @@ import numpy as np
 import sys
 from Weighter import TF, TF_IDF,  Binary,Log_plus
 from RandomWalk import *
+from QueryParser import QueryParser
 
 class IRmodel(object):
     
@@ -274,3 +275,85 @@ class HitsModel(IRmodel):
         hts = Hits(N_pgs)
         hts.randomWalk(P, Succ, Index_P)
         return hts.get_result(Counter_Index_P)
+
+class MetaModel(IRmodel):
+    
+    def __init__(self, listFeaturers, I, query_file, relevance_file, alpha=0.5, l=1e-1):
+        self.listFeaturers = listFeaturers
+        self.Index = I #?
+        self.theta = np.random.rand(len(self.listFeaturers.listFeaturers),1)
+        self.lmbda = l
+        self.alpha = alpha
+        self.all_doc_ids = [ int(k) for k in self.getIndex().docs.keys()]
+        self.query_file = query_file
+        self.relevance_file = relevance_file
+        self.query_parser = QueryParser(self.query_file, self.relevance_file)  
+        
+    def getName(self):
+        return "MetaModel"
+        
+    def getIndex(self):
+        return self.Index
+        
+    def f_theta(self,d,q):
+        x_d_q = np.array(self.listFeaturers.getFeatures(d,q))
+        return x_d_q.dot(self.theta)
+        
+    def getScores(self,query):
+        scores = {}
+        d_keys = self.listFeaturers.listFeaturers[0].model.getScores(query).keys()
+        
+        for d in d_keys:
+            scores[int(d)] = self.f_theta(int(d),query)[0]
+        return scores
+        
+    def train(self, queries, tmax=1):
+        
+        n_queries = len(queries)
+                
+        #for it in range(tmax):
+        q = self.query_parser.nextQuery()
+        query_nb += 1
+        while (q != -1):    
+            #i = np.random.randint(0,n_queries)
+            #q = queries[i]
+            
+            ## relevants & irrelevants docs 
+            
+            ###### Here not really what is considered to be relevant docs: 
+            
+            #relevants = self.listFeaturers.listFeaturers[0].model.getScores(q).keys()            
+            #print "type id :",type(all_doc_ids[0])
+            relevants =  Q.getRelevantDocs()[0][0]
+            if relevants == None:
+                    #print "query ignored: no relevant docs"
+                    Q = self.query_parser.nextQuery()
+                    continue
+            print "relevants", relevants
+            irrelevants = list(set(self.all_doc_ids).difference(set(relevants)))
+            
+            n_relevants = len(relevants)
+            n_irrelevants = len(irrelevants)
+            
+            i_d = np.random.randint(0,n_relevants)
+            d_relevant = relevants[i_d]
+            
+            i_d_prime = np.random.randint(0,n_irrelevants)
+            d_irrelevant = irrelevants[i_d_prime]
+            
+            diff_f_theta = 1. - self.f_theta(d_relevant,q) + self.f_theta(d_irrelevant,q)
+            
+            if diff_f_theta > 0.:
+                x_d_q = np.array(self.listFeaturers.getFeatures(d,q))
+                x_d_prime_q = np.array(self.listFeaturers.getFeatures(d_irrelevant,q))
+                self.theta += self.alpha(x_d_q-x_d_prime_q)
+            
+            # Regularizing Theta
+            self.theta = (1-2*self.lmbda*self.alpha)*self.theta
+            
+            
+            
+        
+        
+    
+    
