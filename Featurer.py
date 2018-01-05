@@ -7,6 +7,7 @@ Created on Thu Jan  4 14:08:27 2018
 
 def hash_query(query):
     res= ""
+    #print query
     for q in query:
         #print q
         h = str(hash(q))+str(hash(query[q]))
@@ -70,7 +71,7 @@ class FeaturerList(Featurer):
                 #print  "whole feature :",self.listFeatures[ft][query_hash]
             else: 
                 #print "whole feature :",fture
-                r = fture[idDoc]            
+                r = fture.get(idDoc,0.)          
             features.append(r)
         return features
     
@@ -108,6 +109,8 @@ if __name__ == "__main__":
     model2 = Vectoriel(I,True, w2)
     w3 = Log(I)
     model3 = Vectoriel(I,True, w3)
+    
+    model4 = Okapi(I)
     queryExample = {'techniqu' : 1, 'accelerat' : 1}
     
     f1 = FeaturerModel(I,model1)
@@ -117,13 +120,18 @@ if __name__ == "__main__":
     f3 = FeaturerModel(I,model3)
     print "\ndone building f3"
     
-    listFeaturers = FeaturerList([f1,f2,f3])
+    f4 = FeaturerModel(I,model4)
+    print "\ndone building f3"
+    
+    listFeaturers = FeaturerList([f1,f2,f3,f4])
     print "\ndone building list featurers"
     features = listFeaturers.getFeatures(3132,queryExample)
     print "list of features :\n",features
     
     # check that the data structures are on point => then describe it
-    
-    metamodel = MetaModel(listFeaturers,I)
+    query_file = "data/cacm/cacm.qry"
+    relevance_file = "data/cacm/cacm.rel"
+    metamodel = MetaModel(listFeaturers,I,query_file,relevance_file)
     scores = metamodel.getScores(queryExample)
-    print "Score by random metamodel ",scores
+    #print "Score by random metamodel ",scores
+    metamodel.train()

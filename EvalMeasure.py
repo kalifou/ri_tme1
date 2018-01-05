@@ -8,7 +8,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from Weighter import Binary, TF, TF_IDF, Log, Log_plus
-from IRmodel import Vectoriel, Okapi, LanguageModel, RankModel, HitsModel
+from IRmodel import Vectoriel, Okapi, LanguageModel, RankModel, HitsModel, MetaModel
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from collections import defaultdict
@@ -16,6 +16,7 @@ from Index import Index
 from QueryParser import QueryParser
 import os.path
 import pickle
+from Featurer import FeaturerModel,FeaturerList
 
 def intersection(l1,l2):
     """Intersection between list l1 & l2"""
@@ -171,11 +172,9 @@ class EvalIRModel(object):
         plt.show()
         
     def __init__(self, index_file, query_file, relevance_file,model_type="Vectoriel"):
-        """ model_type = Vectoriel | Okapi | Language | PageRank"""
+        """ model_type = Vectoriel | Okapi | Language | PageRank | MetaModel """
 
         self.Index = initIndex(index_file)
-        self.Index
-        #print "hello"
         
         if model_type  == "Vectoriel":
             self.models = initModels(self.Index,model_type)
@@ -183,14 +182,37 @@ class EvalIRModel(object):
         elif model_type == "Language":
             print "Init of Language model"
             self.models = [LanguageModel(self.Index,0.9)]
+            
         elif model_type == "Okapi":
             self.models = [Okapi(self.Index)]
+            
         elif model_type == "PageRank":
             self.models = [RankModel(self.Index)]
+            
         elif model_type == "Hits":
             self.models = [HitsModel(self.Index)]
-        else :
-            pass
+            
+        elif model_type == "MetaModel":
+            """Learning a linear combination of 4 models"""
+            I = self.Index
+            w1 = TF_IDF(I)
+            model1 = Vectoriel(I,True, w1)
+            w2 = Log_plus(I)
+            model2 = Vectoriel(I,True, w2)
+            w3 = Log(I)
+            model3 = Vectoriel(I,True, w3)
+            
+            #model4 = Okapi(I)
+            
+            f1 = FeaturerModel(I,model1)
+            f2 = FeaturerModel(I,model2)
+            f3 = FeaturerModel(I,model3)
+            #f4 = FeaturerModel(I,model4)
+            
+            listFeaturers = FeaturerList([f1,f2,f3]) #,f4])
+            metamodel = MetaModel(listFeaturers,I,query_file,relevance_file)
+            metamodel.train()
+            self.models = [metamodel]
             
         print type(self.models[0])    
         self.query_file = query_file

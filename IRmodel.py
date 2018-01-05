@@ -278,7 +278,7 @@ class HitsModel(IRmodel):
 
 class MetaModel(IRmodel):
     
-    def __init__(self, listFeaturers, I, query_file, relevance_file, alpha=0.5, l=1e-1):
+    def __init__(self, listFeaturers, I, query_file, relevance_file, alpha=1e-1, l=1e-1):
         self.listFeaturers = listFeaturers
         self.Index = I #?
         self.theta = np.random.rand(len(self.listFeaturers.listFeaturers),1)
@@ -307,29 +307,30 @@ class MetaModel(IRmodel):
             scores[int(d)] = self.f_theta(int(d),query)[0]
         return scores
         
-    def train(self, queries, tmax=1):
+    def train(self, tmax=1,eps = 1e-1):                
+        #########################################################
+        #TODO : add stochasticity : no random sampling of Query q,
+        #########################################################
         
-        n_queries = len(queries)
-                
         #for it in range(tmax):
         q = self.query_parser.nextQuery()
-        query_nb += 1
-        while (q != -1):    
+        query_nb = 0
+        diff=1e+6
+        old_theta = np.copy(self.theta)
+        
+        while (q != -1) and diff > eps:
+            if query_nb % 10 == 0:
+                print "Query #",query_nb
+                print "Grad theta :",diff
             #i = np.random.randint(0,n_queries)
             #q = queries[i]
             
             ## relevants & irrelevants docs 
-            
-            ###### Here not really what is considered to be relevant docs: 
-            
-            #relevants = self.listFeaturers.listFeaturers[0].model.getScores(q).keys()            
-            #print "type id :",type(all_doc_ids[0])
-            relevants =  Q.getRelevantDocs()[0][0]
-            if relevants == None:
-                    #print "query ignored: no relevant docs"
-                    Q = self.query_parser.nextQuery()
+            relevants = np.array(q.getRelevantDocs())[:,0]
+            if relevants == []:
+                    print "query ignored: no relevant docs"
+                    q = self.query_parser.nextQuery()
                     continue
-            print "relevants", relevants
             irrelevants = list(set(self.all_doc_ids).difference(set(relevants)))
             
             n_relevants = len(relevants)
@@ -341,19 +342,20 @@ class MetaModel(IRmodel):
             i_d_prime = np.random.randint(0,n_irrelevants)
             d_irrelevant = irrelevants[i_d_prime]
             
-            diff_f_theta = 1. - self.f_theta(d_relevant,q) + self.f_theta(d_irrelevant,q)
+            diff_f_theta = 1. - self.f_theta(d_relevant,q.getTf()) + self.f_theta(d_irrelevant,q.getTf())
             
             if diff_f_theta > 0.:
-                x_d_q = np.array(self.listFeaturers.getFeatures(d,q))
-                x_d_prime_q = np.array(self.listFeaturers.getFeatures(d_irrelevant,q))
-                self.theta += self.alpha(x_d_q-x_d_prime_q)
+                x_d_q = np.array(self.listFeaturers.getFeatures(d_relevant,q.getTf())).reshape(self.theta.shape)
+                x_d_prime_q = np.array(self.listFeaturers.getFeatures(d_irrelevant,q.getTf())).reshape(self.theta.shape)
+                self.theta += self.alpha*(x_d_q-x_d_prime_q)
             
             # Regularizing Theta
-            self.theta = (1-2*self.lmbda*self.alpha)*self.theta
+            self.theta = (1.-2.*self.lmbda*self.alpha)*self.theta
+            query_nb+=1
             
+            diff = np.abs(np.sum(old_theta-self.theta))
+            old_theta = np.copy(self.theta)
             
-            
-        
-        
-    
-    
+        # Done with training the model
+        print "Training achieved with Grad_theta < ",eps," !"
+        print "Number of queries required :",query_nb
