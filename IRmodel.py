@@ -7,6 +7,7 @@ import numpy as np
 import sys
 from Weighter import TF, TF_IDF,  Binary,Log_plus
 from RandomWalk import *
+from QueryParser import QueryParser
 
 class IRmodel(object):
     
@@ -252,15 +253,105 @@ class RankModel(IRmodel):
         pr.randomWalk(A)
         return pr.get_result(Counter_Index_P)
         
-class hitsModel(IRmodel):
-    def __init__(self, I, n=1000, K=10):
+class HitsModel(IRmodel):
+    def __init__(self, I, n=100, K=100):
         self.n = n
         self.K = K
+        self.Index=I
+    def getName(self):
+        return "Hits"
         
-    def getScores(query):
-        o = Okapi(I)
-        P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(n, K, query, o, I)
-        pr = PageRank(N_pgs, d) 
-        A = get_A(P, Succ)  
-        pr.randomWalk(A)
-        return pr.get_result(Counter_Index_P)
+    def getIndex(self):
+        return self.Index
+        
+    def getScores(self,query):
+        w = TF_IDF(self.Index)
+        model = Vectoriel(self.Index,True, w)
+        P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(self.n, self.K, query, model, self.Index)
+        hts = Hits(N_pgs)
+        hts.randomWalk(P, Succ, Index_P)
+        return hts.get_result(Counter_Index_P)
+
+class MetaModel(IRmodel):
+    
+    def __init__(self, listFeaturers, I, query_file, relevance_file, alpha=1e-1, l=1e-1):
+        self.listFeaturers = listFeaturers
+        self.Index = I #?
+        self.theta = np.random.rand(len(self.listFeaturers.listFeaturers),1)
+        self.lmbda = l
+        self.alpha = alpha
+        self.all_doc_ids = [ int(k) for k in self.getIndex().docs.keys()]
+        self.query_file = query_file
+        self.relevance_file = relevance_file
+        self.query_parser = QueryParser(self.query_file, self.relevance_file)  
+        
+    def getName(self):
+        return "MetaModel"
+        
+    def getIndex(self):
+        return self.Index
+        
+    def f_theta(self,d,q):
+        x_d_q = np.array(self.listFeaturers.getFeatures(d,q))
+        return x_d_q.dot(self.theta)
+        
+    def getScores(self,query):
+        scores = {}
+        d_keys = self.listFeaturers.listFeaturers[0].model.getScores(query).keys()
+        
+        for d in d_keys:
+            scores[int(d)] = self.f_theta(int(d),query)[0]
+        return scores
+        
+    def train(self, tmax=1,eps = 1e-1):                
+        #########################################################
+        #TODO : add stochasticity : no random sampling of Query q,
+        #########################################################
+        
+        #for it in range(tmax):
+        q = self.query_parser.nextQuery()
+        query_nb = 0
+        diff=1e+6
+        old_theta = np.copy(self.theta)
+        
+        while (q != -1) and diff > eps:
+            if query_nb % 10 == 0:
+                print "Query #",query_nb
+                print "Grad theta :",diff
+            #i = np.random.randint(0,n_queries)
+            #q = queries[i]
+            
+            ## relevants & irrelevants docs 
+            relevants = np.array(q.getRelevantDocs())[:,0]
+            if relevants == []:
+                    print "query ignored: no relevant docs"
+                    q = self.query_parser.nextQuery()
+                    continue
+            irrelevants = list(set(self.all_doc_ids).difference(set(relevants)))
+            
+            n_relevants = len(relevants)
+            n_irrelevants = len(irrelevants)
+            
+            i_d = np.random.randint(0,n_relevants)
+            d_relevant = relevants[i_d]
+            
+            i_d_prime = np.random.randint(0,n_irrelevants)
+            d_irrelevant = irrelevants[i_d_prime]
+            
+            diff_f_theta = 1. - self.f_theta(d_relevant,q.getTf()) + self.f_theta(d_irrelevant,q.getTf())
+            
+            if diff_f_theta > 0.:
+                x_d_q = np.array(self.listFeaturers.getFeatures(d_relevant,q.getTf())).reshape(self.theta.shape)
+                x_d_prime_q = np.array(self.listFeaturers.getFeatures(d_irrelevant,q.getTf())).reshape(self.theta.shape)
+                self.theta += self.alpha*(x_d_q-x_d_prime_q)
+            
+            # Regularizing Theta
+            self.theta = (1.-2.*self.lmbda*self.alpha)*self.theta
+            query_nb+=1
+            
+            diff = np.abs(np.sum(old_theta-self.theta))
+            old_theta = np.copy(self.theta)
+            
+        # Done with training the model
+        print "Training achieved with Grad_theta < ",eps," !"
+        print "Number of queries required :",query_nb

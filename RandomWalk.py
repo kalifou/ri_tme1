@@ -135,11 +135,11 @@ class Hits(RandomWalk):
     """
     descr...
     """
-    def __init__(self,N_pages, N_iters=200):
+    def __init__(self,N_pages, N_iters=10):
         self.N_pages = N_pages
         self.N_iters = N_iters
         
-    def randomWalk(self, A, P_m, Succ_m, Index_P, Counter_Index_P):
+    def randomWalk(self, P_m, Succ_m, Index_P):
         """descr...
         """
         # Authority nodes a
@@ -148,7 +148,7 @@ class Hits(RandomWalk):
         self.h = np.ones(self.N_pages) 
 
         for t in range(self.N_iters):
-            print " iter t :",t
+            #print " iter t :",t
             for i in range(self.N_pages):
                 Js = P_m.get(i,[])
                 
@@ -164,10 +164,11 @@ class Hits(RandomWalk):
                 Succ_i,l_i = Succ_m.get(i,[])
                 if Succ_i != []:
                     sj = 0.
-                    for j in Succ_i: # i -> j                        
-                        if j != '' and "." not in j :#idx != "Unknown_Doc_id":
-                            print j
-                            sj += self.a[int(j)]
+                    for j in Succ_i: # i -> j              
+                        idx = Index_P.get(j,"Unknown_Doc_id")
+                        #print "idx :",idx
+                        if (j != '') and ("." not in j) and (idx != "Unknown_Doc_id"):
+                            sj += self.a[idx]
                     self.h[i] = sj
                 else: 
                     pass
