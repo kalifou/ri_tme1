@@ -52,7 +52,7 @@ class IRmodel(object):
         #print "len ALL, NO, WITH",len(all_doc_ids),len(no_score),len(docs_with_score)
         for doc_id in no_score:
             list_of_sorted_scores.append((doc_id, -sys.maxint))
-   
+        #print list_of_sorted_scores
         return list_of_sorted_scores
 
 class Vectoriel(IRmodel):
@@ -128,44 +128,40 @@ class LanguageModel(IRmodel):
         self.Index = Index
         self.corpus_size = float(Index.total_corpus_size) 
         
+        #pre-compute corpus language model
+        self.corpus_prob = {}
+        for stem in self.Index.stems.keys():
+            docs_with_stem = self.Index.getTfsForStem(stem)
+            self.corpus_prob[stem] = sum(docs_with_stem.values()) / self.corpus_size
+        
     def getIndex(self):
         return self.Index
     
     def getName(self):
         return "Language Model"
-        
+    
     def getScores(self,query):
         """Calculating a score for all documents with respect to the stems of query """
-        
         doc_scores = {}
-        
-        #initial score when meeting doc for first time.
-        init_score = 0
-        
-        for stem in query.keys():
-            docs_with_stem = self.Index.getTfsForStem(stem)
-            corpus_prob = sum(docs_with_stem.values()) / self.corpus_size
-            
-            #update scores for docs with stem
-            for d,stem_tf in docs_with_stem.items():
-                
-                #if doc had none of previous stems, score = sum of corpus probs
-                if not doc_scores.has_key(d):
-                    doc_scores[int(d)] = init_score
-                    
-                doc_prob = stem_tf / float(sum(self.Index.getTfsForDoc(str(d)).values()))
-                doc_scores[int(d)] += query[stem] * np.log(self.l_term * doc_prob + (1-self.l_term) * corpus_prob)
-            
-            #update scores for docs in doc_scores but without this stem
-            doc_scores_without_stem = list(set(doc_scores.keys()) - set(docs_with_stem.keys()))
-            for d in doc_scores_without_stem:
-                doc_scores[int(d)] += (1-self.l_term) * corpus_prob
-            
-            #update initial score for new documents
-            init_score += (1-self.l_term) * corpus_prob
-
+        for doc_id in self.Index.docFrom.keys():
+            doc_score = 0
+            doc_tfs = self.Index.getTfsForDoc(doc_id)
+            doc_length = sum(doc_tfs.values())
+            for q_stem,q_tf in query.items():
+                #add corpus prob in any case
+                in_log = (1 - self.l_term) * self.corpus_prob[q_stem]
+                #add doc prob if stem in current doc
+                if doc_tfs.has_key(str(q_stem)):    
+                    in_log += self.l_term * (doc_tfs[str(q_stem)] / float(doc_length))
+                    #print in_log
+                if in_log < 0:
+                    print "SHOOOOOOOOOULD NOT HAPPEN"
+                doc_score += q_tf * np.log(in_log)
+            if doc_score == 0:
+                print "ERROR SCORE = 0, EVERY DOC SHOULD HAVE A NEG SCORE"
+            doc_scores[int(doc_id)] = doc_score
         return doc_scores
-        
+                    
 class Okapi(IRmodel):
     """BM25 - Okapi : classical Probilistic model for Information Retrieval"""
     
