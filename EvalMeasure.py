@@ -181,7 +181,7 @@ class EvalIRModel(object):
             
         elif model_type == "Language":
             print "Init of Language model"
-            self.models = [LanguageModel(self.Index,0.9)]
+            self.models = [LanguageModel(self.Index,0.2)]
             
         elif model_type == "Okapi":
             self.models = [Okapi(self.Index)]
