@@ -105,9 +105,11 @@ class ParserCACM(Parser):
             
             if(modeX):
                 l=s.split("\t");
-                if(l[0]!=identifier):
+                #print "Links",l," indentifier ",identifier
+                if str(l[0])!=str(identifier):
                     if(len(l[0])>0):
                         links+=l[0]+";";
+                        #print "done",links
                 
                 continue;
             
@@ -147,6 +149,7 @@ class ParserCACM(Parser):
         other["author"]=author
         other["keywords"]=kw
         other["links"] = links
+        #print "final links :", other["links"]
         
         doc=Document(identifier,title+" \n "+author+" \n "+kw+" \n "+texte,other);
         

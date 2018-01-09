@@ -231,10 +231,11 @@ class Okapi(IRmodel):
         return scores
         
 class RankModel(IRmodel):
-    def __init__(self, I, n=200, K=200,d=.9):
+    def __init__(self, I, n=300, K=100,d=.85):
         self.n = n
         self.K = K
         self.Index = I
+        self.Index.get_all_doc_ids()
         self.d = d
     def getName(self):
         return "PageRank"
@@ -242,11 +243,28 @@ class RankModel(IRmodel):
     def getIndex(self):
         return self.Index
         
+#    def getRanking(self,query):
+#        """Generic Ranking (ordered by desc) all the documents using how they score on the query"""
+#        
+#        scores = self.getScores(query)        
+#        list_of_sorted_scores = list( (int(key),value) for key, value \
+#                            in sorted(scores.iteritems(),reverse=True, key=lambda (k,v): (v,k)))
+#        
+#        # Now add all docs without any score at the end of the list
+#        docs_with_score = scores.keys()
+#        ids_ = self.getIndex().all_ids_
+#        #all_ids.remove('')
+#        all_doc_ids = [ int(float(k)) for k in ids_] 
+#        no_score = list( set(all_doc_ids).difference(set(docs_with_score)))
+#        #print "len ALL, NO, WITH",len(all_doc_ids),len(no_score),len(docs_with_score)
+#        for doc_id in no_score:
+#            list_of_sorted_scores.append((doc_id, -sys.maxint))
+#        #print list_of_sorted_scores
+#        return list_of_sorted_scores  
+        
     def getScores(self,query):
-        #w = Binary(self.Index) 
         w = TF_IDF(self.Index)
         model = Vectoriel(self.Index,True, w)
-        #model = Okapi(self.Index)
         P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(self.n, self.K, query, model, self.Index)
         pr = PageRank(N_pgs, self.d) 
         A = get_A(P, Succ, N_pgs)  
@@ -254,7 +272,7 @@ class RankModel(IRmodel):
         return pr.get_result(Counter_Index_P)
         
 class HitsModel(IRmodel):
-    def __init__(self, I, n=100, K=100):
+    def __init__(self, I, n=100, K=20):
         self.n = n
         self.K = K
         self.Index=I

@@ -10,8 +10,10 @@ from Index import Index
 
 def get_Pre_Succ(I):
     """returns Succ & Prec"""
-    Docs = I.docs
-    Docs_id = Docs.keys()
+    #Docs = I.docs
+    #Docs_id = Docs.keys()
+    Docs = I.getIndex().all_ids_
+    Docs_id = [ int(float(k)) for k in Docs] 
     N_pgs = len(Docs_id)
     Index_P = { id:idx for idx,id in enumerate(Docs_id)}
     Counter_Index_P = { idx:id for idx,id in enumerate(Docs_id)}
@@ -23,8 +25,8 @@ def get_Pre_Succ(I):
         succ_e,l_e = Succ[e]
         for s in succ_e:    
             if Index_P.get(s,"Unknown_Doc_id") not in P:
-                P[Index_P.get(s,"Unknown_Doc_id")] = []
-            P[Index_P.get(s,"Unknown_Doc_id")].append(e) 
+                P[Index_P.get(s,"Unknown_Doc_id")] = set()
+            P[Index_P.get(s,"Unknown_Doc_id")].add(e) 
     
     return P,Succ,Index_P,Counter_Index_P,N_pgs
     
@@ -33,9 +35,9 @@ def max_K(list,K):
     returning at most the first K elements of the list
     """
     l = len(list)
-    res = list
+    res = list #np.copy(list)
     if l > K:
-        res = list[:K]
+        res = list[:K] #np.copy(list[:K])
     return res
     
 def get_Pre_Succ_seeds(Seeds, K, I):
@@ -46,14 +48,18 @@ def get_Pre_Succ_seeds(Seeds, K, I):
     Counter_Index_P = { idx:id for idx,id in enumerate(Docs_id)}
     
     print "\nBuilding Pi..."
-    Succ = { Index_P[p]:(max_K( I.getLinksForDoc(p),K),len(I.getLinksForDoc(p))) for p in Docs_id }
+    #Succ = { Index_P[p]:(max_K( I.getLinksForDoc(p),K),len(I.getLinksForDoc(p))) for p in Docs_id }
+    Succ = { Index_P[p]:( I.getLinksForDoc(p),len(I.getLinksForDoc(p))) for p in Docs_id }
     P = {}
     for e in Succ:
         succ_e,l_e = Succ[e]
         for s in succ_e:    
             if Index_P.get(s,"Unknown_Doc_id") not in P:
-                P[Index_P.get(s,"Unknown_Doc_id")] = []
-            P[Index_P.get(s,"Unknown_Doc_id")].append(e)  
+                P[Index_P.get(s,"Unknown_Doc_id")] = set()
+            P[Index_P.get(s,"Unknown_Doc_id")].add(e) 
+    for key_p in P.keys():
+        P[key_p] = max_K(list(P[key_p]),K)
+        
     return P,Succ,Index_P,Counter_Index_P,N_pgs
 
 def get_A(P,Succ,N_pgs):
@@ -68,6 +74,7 @@ def get_A(P,Succ,N_pgs):
                 A[i][j] = 1./N_pgs
                 
             elif j in Pi: # j precedes i
+                #print 'happpens'
                 A[i][j] = 1./lj                
     return A
 
@@ -85,9 +92,10 @@ def select_G_q( n, k, query, model,I):
     # Ordering the docs by descending scores (D,score)
     desc_dcs_scores = sorted(docs_scores.iteritems(), key=lambda (k,v): (v,k),reverse=True)
     # Selecting n best seeds 
-    seeds = desc_dcs_scores[:n]
+    seeds = max_K(desc_dcs_scores,n)
+    
     # Building the graph using these seeds & parameter k (max number of entering links to consider)
-    return  get_Pre_Succ_seeds(seeds, k,I)
+    return get_Pre_Succ_seeds(seeds, k,I)
 
 class RandomWalk(object):
     def __init__(self,index,N_pgs):
@@ -125,11 +133,11 @@ class PageRank(RandomWalk):
             sum = np.sum(abs(self.mu-prec))
             #print "Step : ",cpt,", Sum of abs. error (mu) : ",sum
             cpt+=1
-        print "...Converged!"
+        #print "...Converged!"
         
     def get_result(self,Counter_Index):
-        r = { int(Counter_Index[k]): float(self.mu[k]) for k in range(len(self.mu)) }
-        return r #sorted(r.iteritems(), key=lambda (k,v): (v,k),reverse=True)
+        r = { int(Counter_Index[k]): self.mu[k] for k in range(len(self.mu)) }
+        return r
 
 class Hits(RandomWalk):
     """
@@ -181,7 +189,6 @@ class Hits(RandomWalk):
         print "Hs :",self.h[1:10]
     
     def get_result(self,Counter_Index):
-        r = { int(Counter_Index[k]): float(self.a[k]) for k in range(len(self.a)) }
-        return r #sorted(r.iteritems(), key=lambda (k,v): (v,k),reverse=True
-
+        r = { int(Counter_Index[k]): self.a[k] for k in range(len(self.a)) }
+        return r
     

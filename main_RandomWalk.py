@@ -21,7 +21,9 @@ if __name__ == "__main__":
     
     sys.stdout.write("Indexing database...")
     sys.stdout.flush()
-    if os.path.isfile('Index.p'):
+    redo = False
+    
+    if os.path.isfile('Index.p') and not redo:
        I = pickle.load( open( "Index.p", "rb" ) ) 
     
     else:
@@ -53,23 +55,24 @@ if __name__ == "__main__":
 #    print "MAX a ",max(hts.get_a())
     
     #### Graph relevant to query
-    n=1000
+    n=500
     K = 1000
     q = None
+    
     #o = Okapi(I)
     w = TF_IDF(I)
     o = Vectoriel(I,True, w)
     queryExample = {'techniqu' : 1, 'accelerat' : 1}
     P, Succ, Index_P, Counter_Index_P, N_pgs = select_G_q(n, K, queryExample, o, I)
-#    pr = PageRank(N_pgs, d) 
-#    A = get_A(P, Succ,N_pgs)  
-#    print P
-#    pr.randomWalk(A)
-#    mu = pr.get_result(Counter_Index_P)
-#    print "MAX mu ",max(mu)  
-#    print "Npages",N_pgs,pr.N_pages
+    pr = PageRank(N_pgs, d) 
+    A = get_A(P, Succ,N_pgs)  
+    print P
+    pr.randomWalk(A)
+    mu = pr.get_result(Counter_Index_P)
+    print "MAX mu ",max(mu)  
+    print "Npages",N_pgs,pr.N_pages
     print "Random walk for HITS"
-    hts = Hits(N_pgs,N_iters=100)
-    hts.randomWalk(P, Succ, Index_P)
-    a = hts.get_result(Counter_Index_P)
-    print a
+#    hts = Hits(N_pgs,N_iters=100)
+#    hts.randomWalk(P, Succ, Index_P)
+#    a = hts.get_result(Counter_Index_P)
+#    print a

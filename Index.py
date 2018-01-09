@@ -12,6 +12,7 @@ class Index(object):
         self.docs = {}
         self.stems = {}
         self.docFrom = {}
+        self.links_ids = set()
         self.parser = parser
         self.textRepresenter = textRepresenter
         self.index_file = None
@@ -46,10 +47,11 @@ class Index(object):
              
              #get hyperlinks
              str_links = doc.get("links")
-             
+             #print "first links gotten : ",str_links
              #stores  the source position and length of bow and links for document
              doc_id = doc.getId()
              self.docs[doc_id] = (index.tell(), len(str_bow), len(str_links))
+             
              
              #store source of doc
              self.docFrom[doc_id] = doc.get("from").split(';')
@@ -61,7 +63,9 @@ class Index(object):
              #STEP 1 for inv index: gather size needed for each term
              for stem,val in bow.iteritems():
                  stem_length[stem] = stem_length.get(stem,0)+ len("(" + str(doc_id) + ":" + str(val) + ");")
-        
+             
+             #self.links_ids.update(self.getLinksForDoc(doc_id))
+             
         #STEP 2 for inv index: compute positions in txt file for each stem
         cur_pos = 0
         pos = {}
@@ -114,8 +118,20 @@ class Index(object):
         index = open(self.index_file,'r')
         index.seek(pos + bow_size)
         str_links = index.read(links_size)
-        index.close()       
+        index.close() 
+        #print "gettin link :",str_links," size: ",links_size
+        
         return str_links.split(';')[0:-1]
+    
+    def get_all_doc_ids(self):
+        all_doc_ids=set()
+        d_ids = self.docs.keys()
+        all_doc_ids.update(d_ids)
+        
+        for id in d_ids:
+            all_doc_ids.update(self.getLinksForDoc(id))
+            
+        self.all_ids_ = all_doc_ids
         
     #return -1 for unknown stem, tf otherwise
     def getTfsForStem(self,stem):
