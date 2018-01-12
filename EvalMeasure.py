@@ -8,7 +8,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from Weighter import Binary, TF, TF_IDF, Log, Log_plus
-from IRmodel import Vectoriel, Okapi, LanguageModel, RankModel, HitsModel, MetaModel
+from IRmodel import Vectoriel, Okapi, LanguageModel, RankModel, HitsModel, MetaModel, RandomModel
 from ParserCACM import ParserCACM
 from TextRepresenter import PorterStemmer
 from collections import defaultdict
@@ -113,6 +113,7 @@ class Eval_P(EvalMeasure):
             return max_recall,np.ones(len(retrieved_doc)),np.ones(len(retrieved_doc))
         #print "relevant type : ",type(relevant_doc[0])
         #print "retrieved type : ",type(retrieved_doc[0][0])
+        #print "retrieved :",retrieved_doc
         retrieved = np.array( retrieved_doc ,dtype=int)[:,0]
         #print "retrieved after numpy type : ",type(retrieved[0])
         recall = []
@@ -195,25 +196,43 @@ class EvalIRModel(object):
         elif model_type == "MetaModel":
             """Learning a linear combination of 4 models"""
             I = self.Index
+            
             w1 = TF_IDF(I)
             model1 = Vectoriel(I,True, w1)
+            
             w2 = Log_plus(I)
             model2 = Vectoriel(I,True, w2)
-            w3 = Log(I)
+            
+            w3 = Binary(I)
             model3 = Vectoriel(I,True, w3)
             
-            #model4 = Okapi(I)
+            w4 = TF(I)
+            model4 = Vectoriel(I,True, w4)
+            
+            model5 = Okapi(I)
+            
+            model6 = LanguageModel(I,0.2)
+            
+            model7 = RankModel(I,n=5, K=100,d=.85)
             
             f1 = FeaturerModel(I,model1)
             f2 = FeaturerModel(I,model2)
             f3 = FeaturerModel(I,model3)
-            #f4 = FeaturerModel(I,model4)
+            f4 = FeaturerModel(I,model4)
+            f5 = FeaturerModel(I,model5)
+            f6 = FeaturerModel(I,model6)
+            f7 = FeaturerModel(I,model7)
             
-            listFeaturers = FeaturerList([f1,f2,f3]) #,f4])
+            
+            listFeaturers = FeaturerList([f1,f2,f3,f4,f5,f6,f7])
             metamodel = MetaModel(listFeaturers,I,query_file,relevance_file)
             metamodel.train()
             self.models = [metamodel]
-            
+        elif model_type == "Random":
+            self.models = [RandomModel(self.Index)]
+        else:
+            pass
+        
         print type(self.models[0])    
         self.query_file = query_file
         self.relevance_file = relevance_file
